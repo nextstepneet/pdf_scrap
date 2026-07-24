@@ -1,0 +1,7 @@
+Lib/
+Scripts/
+__pycache__/
+*.pyc
+.env
+*.pdf
+test_save*.py

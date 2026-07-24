@@ -1,0 +1,233 @@
+"""
+Fast PDF extractor using pypdfium2 (C++ PDFium).
+Single-threaded but 10-20x faster than pdfplumber due to PDFium's C++ speed.
+
+PDF Row format (Maharashtra NEET CAP Round):
+  Sr# | AIR | NEET-Roll | CET-Form | Name | Gender | PersonalCat | [Quota] | Code:CollegeName
+
+The QUOTA column holds the seat type (OPEN, OPEN (W), OBC(W), NTC(W), etc.)
+The PersonalCat is the candidate's own category (OBC, NTC, SEBC, ...).
+
+For cutoff calculation we record the highest AIR (= last candidate) for each
+(college, QUOTA) pair.  The QUOTA column is always the LAST recognisable
+category token before the "NNNN:CollegeName" part of the line.
+"""
+import re
+from collections import defaultdict
+from typing import Optional
+
+import pypdfium2 as pdfium
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Quota / Category normalisation map
+# Key  = exactly how it appears in the PDF (case-insensitive match later)
+# Value = canonical display label
+# ─────────────────────────────────────────────────────────────────────────────
+QUOTA_MAP = {
+    # ── General / Open ───────────────────────────────────────────────────────
+    "OPEN":      "OPEN",
+    "OPEN (W)":  "OPEN (W)",
+
+    # ── OBC ──────────────────────────────────────────────────────────────────
+    "OBC":       "OBC",
+    "OBC (W)":   "OBC (W)",
+    "OBC(W)":    "OBC (W)",          # spaceless variant in PDF
+
+    # ── SEBC (Socially & Educationally Backward Classes) ─────────────────────
+    "SEBC":      "SEBC",
+    "SEBC (W)":  "SEBC (W)",
+    "SEBC(W)":   "SEBC (W)",
+
+    # ── SBC (Special Backward Class) ─────────────────────────────────────────
+    "SBC":       "SBC",
+    "SBC (W)":   "SBC (W)",
+    "SBC(W)":    "SBC (W)",
+
+    # ── NT series (Nomadic Tribes) ────────────────────────────────────────────
+    "NTA":       "NT-A",   "NTA (W)":  "NT-A (W)",   "NTA(W)": "NT-A (W)",
+    "NTB":       "NT-B",   "NTB (W)":  "NT-B (W)",   "NTB(W)": "NT-B (W)",
+    "NTC":       "NT-C",   "NTC (W)":  "NT-C (W)",   "NTC(W)": "NT-C (W)",
+    "NTD":       "NT-D",   "NTD (W)":  "NT-D (W)",   "NTD(W)": "NT-D (W)",
+
+    # ── SC / ST ───────────────────────────────────────────────────────────────
+    "SC":        "SC",     "SC (W)":   "SC (W)",      "SC(W)":  "SC (W)",
+    "ST":        "ST",     "ST (W)":   "ST (W)",      "ST(W)":  "ST (W)",
+
+    # ── EWS (Economically Weaker Section) ─────────────────────────────────────
+    "EWS":       "EWS",
+    "EWS (W)":   "EWS (W)",
+    "EWS(W)":    "EWS (W)",
+
+    # ── VJ-A (Vimukta Jati) ───────────────────────────────────────────────────
+    "VJA":       "VJ-A",
+    "VJA (W)":   "VJ-A (W)",
+    "VJA(W)":    "VJ-A (W)",
+
+    # ── Defence / PH / NRI ───────────────────────────────────────────────────
+    # D1/D2/D3 = personal category codes; map to specific DEF quotas for precision
+    "D1":        "DEF1",   "D2":      "DEF2",   "D3":      "DEF3",
+    "DEF":       "DEF",
+    "PH":        "PH",     "PH (W)":  "PH (W)", "PH(W)":   "PH (W)",
+    "NRI":       "NRI",
+    # NOTE: bare "HA" is intentionally NOT a quota — it is a personal-category
+    # home-address marker. Strip it from the block before quota matching (see below).
+
+    # ── EMD prefix (Early Merit Declaration variants) ─────────────────────────
+    # These appear as the PERSONAL category column, not the quota. But if they
+    # do appear as a quota token we normalise them to the base category.
+    "EMOPEN":  "OPEN",    "EMOBC":  "OBC",
+    "EMNTA":   "NT-A",    "EMNTB":  "NT-B",
+    "EMNTC":   "NT-C",    "EMNTD":  "NT-D",
+    "EMSC":    "SC",      "EMST":   "ST",
+    "EMSBC":   "SBC",     "EMSEBC": "SEBC",
+    "EMEWS":   "EWS",     "EMVJA":  "VJ-A",
+    "EMHA":    "HA",
+    # EMR women variants (spaceless — appear as quota suffix)
+    "EMNTBW":  "NT-B (W)",  "EMNTCW":  "NT-C (W)",
+    "EMNTDW":  "NT-D (W)",  "EMVJAW":  "VJ-A (W)",
+    "EMOBCW":  "OBC (W)",   "EMSCW":   "SC (W)",
+    "EMSEBCW": "SEBC (W)",  "EMOPNW":  "OPEN (W)",
+    "EMOBCW":  "OBC (W)",   "HEMOBCW": "HOBC (W)",
+
+    # ── Home-address (HA) variants ────────────────────────────────────────────
+    # HA is a personal-category flag; the quota code itself (HNTB, HNTC…) is used as-is.
+    "HOPEN":   "HOPEN",    "HOBC":    "HOBC",
+    "HSC":     "HSC",      "HST":     "HST",
+    "HNTA":    "HNTA",     "HNTB":    "HNTB",
+    "HNTC":    "HNTC",     "HNTD":    "HNTD",
+    "HEWS":    "HEWS",
+    "HEM OBCW": "HOBC (W)",   # HA + EMR OBC Women combined token in PDF
+    "HNTA W":  "HNTA (W)", "HNTB W":  "HNTB (W)",
+    "HNTC W":  "HNTC (W)", "HNTD W":  "HNTD (W)",
+    "HVJA W":  "HVJA (W)", "HVJA":    "HVJA",
+    "HOBC W":  "HOBC (W)", "HEWS W":  "HEWS (W)",
+    "HSBC":    "HSBC",     "HSBC W":  "HSBC (W)",
+    "HOBCW":   "HOBC (W)", "HSCW":    "HSC (W)",
+    "HSTW":    "HST (W)",  "HVJAW":   "HVJA (W)",
+
+    # ── I.Q. (Institutional Quota) ───────────────────────────────────────────────────
+    # The PDF always encodes I.Q. as: PersonalCat [HA] [D1/D2/D3] I.Q. [MINO]
+    # i.e. I.Q. is ALWAYS the quota suffix; the prefix is the personal category.
+    # We only keep the two genuine compound forms:
+    "I.Q. MINO":   "I.Q. MINO",   # Minority I.Q. (appears verbatim in Quota col)
+    "I.Q.":        "I.Q.",
+
+    # ── DEF grades (Defence categories 1 / 2 / 3) ────────────────────────────
+    "DEF1 W":      "DEF1 (W)",   # longer → checked before DEF1
+    "DEF2 W":      "DEF2 (W)",
+    "DEF3 W":      "DEF3 (W)",
+    "DEF1":        "DEF1",
+    "DEF2":        "DEF2",
+    "DEF3":        "DEF3",
+
+    # ── MKB (Minority Khilafat Board) ─────────────────────────────────────────
+    "MKB W":       "MKB (W)",
+    "MKB":         "MKB",
+
+    # ── SEBC-HA / SEBC-combo quotas ───────────────────────────────────────────
+    "HSEBC W":       "HSEBC (W)",
+    "HSEBC":         "HSEBC",
+    "HOPENW":        "HA-OPEN (W)",
+    "EMSEBCW":       "SEBC (W)",   # EMR variant of SEBC (W)
+
+    # ── OPEN MINO / Minority ──────────────────────────────────────────────────
+    "OPEN (W) MINO": "OPEN (W) MINO",
+    "OPEN MINO":     "OPEN MINO",
+    "(W) MINO":      "OPEN (W) MINO",   # truncated form
+
+    # ── Orphan ────────────────────────────────────────────────────────────────
+    "ORPHAN-A":      "ORPHAN-A",
+    "ORPHANC":       "ORPHAN-C",
+    "ORPHAN-A NT2":  "ORPHAN-A NT2",
+    "ORPHAN-C NT1":  "ORPHAN-C NT1",
+    "ORPHAN-C NT2":  "ORPHAN-C NT2",
+    "ORPHAN-C VJ":   "ORPHAN-C VJ",
+    # Case variants from PDF
+    "Orphan-A NT2":  "ORPHAN-A NT2",
+    "Orphan-C NT1":  "ORPHAN-C NT1",
+    "Orphan-C NT2":  "ORPHAN-C NT2",
+    "Orphan-C VJ":   "ORPHAN-C VJ",
+
+    # ── PWD (Persons With Disabilities) ───────────────────────────────────────
+    "PWD-OPEN":    "PWD-OPEN",
+}
+
+# Pre-sorted list: longest keys first → greedy left-to-right matching
+_QUOTA_KEYS_SORTED = sorted(QUOTA_MAP.keys(), key=len, reverse=True)
+
+# Quick-skip line prefixes (never data rows)
+_SKIP = (
+    "GOVERNMENT", "State Common", "Admissions to Health",
+    "PROVISIONAL", "Note:", "Printed On", "Sr. AIR",
+    "No. Roll", "Last Date", "Admitting", "This Provisional",
+    "Candidate should", "This seat", "be confirmed", "stipulated",
+    "Legends", "I.Q.",
+)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Primary line regex
+# Columns (space-separated):
+#   Sr#   AIR   NEET-Roll   CET-Form   Name(multi-word)   Gender(M/F)
+#   PersonalCat(1-2 tokens)   Quota(1-2 tokens)   ColCode:ColName
+#
+# We anchor from the RIGHT on the ColCode:ColName so the greedy Name field
+# consumes everything up to the last [MF] before the code/quota block.
+# ─────────────────────────────────────────────────────────────────────────────
+_FLEX_RE = re.compile(
+    r"^\s*\d+\s+"              # Sr No
+    r"(\d+)\s+"                # group 1: AIR rank
+    r"\d+\s+"                  # NEET Roll No
+    r"\d+\s+"                  # CET Form No
+    r".+?\s+"                  # Name (non-greedy up to last M/F)
+    r"[MF]\s+"                 # Gender
+    r"(.+?)\s+"                # group 2: PersonalCat + Quota block
+    r"(\d{4})\s*:\s*(.+)$"     # group 3: ColCode, group 4: ColName
+)
+
+# ──────�    raw = cat_quota_block.strip()
+
+    # ── Step 1: strip trailing (EMD) annotation ───────────────────────────────
+    raw = _EMD_RE.sub("", raw).strip()
+
+    # ── Step 2: strip other parenthetical noise — preserve (W) ───────────────
+    raw = _JUNK_RE.sub("", raw).strip()
+
+    if not raw:
+        return None
+
+    # ── Step 3: I.Q. fast-path ──────────────────────────────────────────────
+    # The PDF ALWAYS encodes I.Q. rows as: PersonalCat [HA] [Dx] I.Q. [MINO]
+    # I.Q. is ALWAYS the quota; everything before is the personal category.
+    # This runs BEFORE suffix matching to prevent personal-cat tokens from
+    # being treated as compound quota names (e.g. "SOBC I.Q." must not
+    # match a hypothetical "SOBC I.Q." key — it is simply I.Q.).
+    m_iq = _IQ_RE.match(raw)
+    if m_iq:
+        return "I.Q. MINO" if m_iq.group(1) else "I.Q."
+
+    # ── Step 4: strip bare "HA" (home-address personal-category flag) ─────────
+    # HA is stripped UNLESS immediately followed by an H-prefix quota token
+    # (HNTB, HEWS, HOBC…), so "NTB HA HNTB" stays intact.
+    raw_clean = _HA_STRIP_RE.sub("", raw).strip() or raw
+
+    # ── Step 5: greedy suffix match against known QUOTA_MAP keys ─────────────
+    raw_up = raw_clean.upper()
+    padded = " " + raw_up + " "
+    for key in _QUOTA_KEYS_SORTED:
+        if padded.endswith(" " + key.upper() + " "):
+            return QUOTA_MAP[key]
+
+    # ── Step 6: D1 / D2 / D3 alias — last token is a DEF personal-cat code ───
+    parts = raw_clean.split()
+    if parts and parts[-1].upper() in _DEF_ALIAS:
+        return _DEF_ALIAS[parts[-1].upper()]
+
+    # ── Step 7: right-to-left token scan ───────────────────────────────────
+    # Personal category IS the quota — e.g. block = "NTC", "SC", "SEBC".
+    _qmap_upper = {k.upper(): v for k, v in QUOTA_MAP.items()}
+    for token in reversed(parts):
+        val = _qmap_upper.get(token.upper())
+        if val is not None:
+            return val
+
+    # ── Step 8: absolute fallback — return last raw token (logged as unknown) ─

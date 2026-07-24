@@ -1,0 +1,106 @@
+def extract_cutoffs(pdf_path: str) -> list:
+    """
+    Fast single-threaded extraction using pypdfium2 (C++ PDFium).
+    For each (college, quota) pair, records the HIGHEST AIR rank seen
+    = last candidate selected = closing cutoff rank.
+
+    Returns list of dicts:
+      { college_code, college_name, category_cutoffs: {quota: max_air} }
+    """
+    data:  dict = defaultdict(lambda: defaultdict(int))
+    names: dict = {}
+    unknown_cats: set = set()   # captures any category not in QUOTA_MAP
+
+    # Read PDF as bytes to avoid Windows path encoding issues
+    with open(pdf_path, "rb") as f:
+        pdf_bytes = f.read()
+
+    doc = pdfium.PdfDocument(pdf_bytes)
+    try:
+        for pg_idx in range(len(doc)):
+            page     = doc[pg_idx]
+            textpage = page.get_textpage()
+            text     = textpage.get_text_range()
+            textpage.close()
+            page.close()
+
+            if not text:
+                continue
+
+            for raw_line in text.split("\n"):
+                line = raw_line.strip()
+
+                # Fast skips
+                if not line:
+                    continue
+                if line.startswith(_SKIP):
+                    continue
+                if "------" in line or "======" in line:
+                    continue
+
+                m = _FLEX_RE.match(line)
+                if not m:
+                    continue
+
+                air           = int(m.group(1))
+                cat_quota_raw = m.group(2).strip()
+                col_code      = m.group(3)
+                col_name      = m.group(4).strip()
+
+                names[col_code] = col_name
+
+                quota = _extract_quota(cat_quota_raw)
+                if quota:
+                    if air > data[col_code][quota]:
+                        data[col_code][quota] = air
+                    # Track any quota not in the original map (unknown/new categories)
+                    if quota not in QUOTA_MAP.values():
+                        unknown_cats.add(quota)
+
+    finally:
+        doc.close()
+
+    records = [
+        {
+            "college_code":     code,
+            "college_name":     names.get(code, code),
+            "category_cutoffs": dict(cat_dict),
+        }
+        for code, cat_dict in sorted(data.items())
+    ]
+
+    # Log unknown categories so developers can add them to QUOTA_MAP
+    if unknown_cats:
+        print(f"[extractor] ⚠️  Unknown/new categories found: {sorted(unknown_cats)}")
+        print(f"[extractor]    Add these to QUOTA_MAP in extractor.py")
+
+    return records
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Self-test
+# ─────────────────────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    import time, sys
+    sys.stdout.reconfigure(encoding="utf-8")
+
+    pdf = r"e:\NextStepNeet\SellList-R1-MBBS-BDS.pdf"
+    print(f"Extracting: {pdf}")
+    t0   = time.time()
+    recs = extract_cutoffs(pdf)
+    dt   = time.time() - t0
+
+    cats = set()
+    for r in recs:
+        cats.update(r["category_cutoffs"].keys())
+
+    print(f"\nDone in {dt:.2f}s")
+    print(f"Colleges   : {len(recs)}")
+    print(f"Categories : {len(cats)}")
+    print(f"  => {sorted(cats)}")
+    print("\nFirst 5 colleges:")
+    for r in recs[:5]:
+        print(f"  [{r['college_code']}] {r['college_name']}")
+        for c, v in sorted(r["category_cutoffs"].items()):
+            print(f"       {c:<20} -> AIR {v:,}")
+        print()

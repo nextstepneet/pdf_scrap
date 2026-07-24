@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAP Round Cutoff</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #f8f9fb;
+      --bg2:      #ffffff;
+      --bg3:      #f1f3f7;
+      --border:   #e2e5ec;
+      --border2:  #c8cdd8;
+      --primary:  #2563eb;
+      --primary-h:#1d4ed8;
+      --success:  #16a34a;
+      --danger:   #dc2626;
+      --warn:     #d97706;
+      --text:     #111827;
+      --text2:    #6b7280;
+      --text3:    #9ca3af;
+      --radius:   10px;
+      --radius-sm:6px;
+      --shadow:   0 1px 4px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Top Bar ── */
+    nav {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .nav-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .nav-right {
+      font-size: 0.78rem;
+      color: var(--text3);
+    }
+
+    /* ── Container ── */
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 32px 2rem;
+    }
+
+    /* ── Upload Zone ── */
+    .upload-card {
+      background: var(--bg2);
+      border: 2px dashed var(--border2);
+      border-radius: var(--radius);
+      padding: 48px 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .upload-card:hover,
+    .upload-card.dragover {
+      border-color: var(--primary);
+      background: #eff6ff;
+    }
+
+    .upload-icon {
+      font-size: 36px;
+      margin-bottom: 14px;
+      display: block;
+      opacity: 0.7;
+    }
+
+    .upload-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .upload-sub {
+      font-size: 0.83rem;
+      color: var(--text3);
+      margin-bottom: 20px;
+    }
+
+    #fileInput { display: none; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 20px;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      text-decoration: none;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--primary-h); }
+
+    .btn-success {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+    .btn-success:hover { background: #bbf7d0; }
+
+    .btn-outline {
+      background: var(--bg2);
+      color: var(--text2);
+      border: 1px solid var(--border2);
+    }
+    .btn-outline:hover { background: var(--bg3); color: var(--text); }
+
+    .btn-danger-soft {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+    .btn-danger-soft:hover { background: #fecaca; }
+
+    /* ── Progress ── */
+    .progress-wrap { display: none; margin-top: 20px; }
+    .progress-wrap.active { display: block; }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--text2);
+      margin-bottom: 6px;
+    }
+    .progress-track {
+      height: 4px;
+      background: var(--bg3);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 999px;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    /* ── Results ── */
+    #results { display: none; margin-top: 32px; }
+    #results.show { display: block; }
+
+    .results-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .results-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      background: var(--bg3);
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+
+    .chip.green { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+    .chip.blue  { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
+    .chip.gray  { background: var(--bg3); color: var(--text2); }
+
+    .results-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .title-input {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 8px 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      width: 180px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .title-input:focus { border-color: var(--primary); background: var(--bg2); }
+
+    /* ── Filter Bar ── */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .search-input,
+    .select-input {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 8px 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.83rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input { flex: 1; min-width: 180px; }
+    .search-input:focus,
+    .select-input:focus { border-color: var(--primary); }
+    .search-input::placeholder { color: var(--text3); }
+
+    /* ── Table ── */
+    .table-wrap {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+      max-height: 62vh;
+      overflow-y: auto;
+    }
+
+    table { border-collapse: collapse; width: 100%; font-size: 0.82rem; }
+
+    thead { position: sticky; top: 0; z-index: 10; }
+
+    thead th {
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border2);
+      padding: 10px 12px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.75rem;
+      color: var(--text2);
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+    }
+
+    thead th.col-code {
+      text-align: left;
+      position: sticky; left: 0; z-index: 20;
+      background: var(--bg3);
+      border-right: 1px solid var(--border);
+      min-width: 60px;
+    }
+
+    thead th.col-name {
+      text-align: left;
+      min-width: 220px;
+    }
+
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f0f4ff; }
+
+    tbody td {
+      padding: 9px 12px;
+      white-space: nowrap;
+    }
+
+    tbody td.col-code {
+      position: sticky; left: 0;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 0.78rem;
+      color: var(--primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    tbody tr:hover td.col-code { background: #f0f4ff; }
+
+    tbody td.col-name {
+      color: var(--text);
+      font-weight: 500;
+      font-size: 0.82rem;
+    }
+
+    .rank-val {
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+
+    .rank-val.na { color: var(--text3); font-family: 'Inter', sans-serif; font-size: 0.75rem; }
+    .t1 { color: #15803d; font-weight: 600; }   /* ≤ 10k  — green */
+    .t2 { color: #b45309; }                       /* ≤ 50k  — amber */
+    .t3 { color: #6b7280; }                       /* > 50k  — gray  */
+
+    /* ── History ── */
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 40px 0 16px;
+    }
+
+    .section-head h2 {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text2);
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .section-line {
+      flex: 1; height: 1px;
+      background: var(--border);
+    }
+
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .history-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .history-card:hover {
+      border-color: var(--border2);
+      box-shadow: var(--shadow);
+    }
+
+    .history-card h3 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .history-meta {
+      font-size: 0.75rem;
+      color: var(--text3);
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+
+    .history-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ── Toast ── */
+    .toast-container {
+      position: fixed; bottom: 20px; right: 20px;
+      z-index: 9999;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+
+    .toast {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      max-width: 320px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      box-shadow: var(--shadow);
+      animation: slideIn 0.25s ease, fadeOut 0.3s 3.7s ease forwards;
+      font-size: 0.83rem;
+      color: var(--text);
+    }
+
+    .toast.error  { border-color: #fca5a5; background: #fff5f5; }
+    .toast.success{ border-color: #86efac; background: #f0fdf4; }
+
+    /* ── Loading Overlay ── */
+    #loadingOverlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+    }
+    #loadingOverlay.active { display: flex; }
+
+    .loader-ring {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loader-text  { font-size: 0.9rem; font-weight: 500; color: var(--text); }
+    .loader-sub   { font-size: 0.78rem; color: var(--text3); }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    .spinner.dark {
+      border-color: rgba(0,0,0,0.12);
+      border-top-color: var(--primary);
+    }
+
+    /* ── Animations ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(16px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to   { opacity: 0; pointer-events: none; }
+    }
+
+    @media (max-width: 640px) {
+      .container { padding: 20px 1rem; }
+      .upload-card { padding: 32px 16px; }
+      .results-bar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<nav>
+  <span class="nav-title">CAP Round — Cutoff Viewer</span>
+  <span class="nav-right">Maharashtra NEET MBBS / BDS</span>
+</nav>
+
+<!-- Main -->
+<div class="container">
+
+  <!-- Upload -->
+  <div id="uploadZone" class="upload-card"
+       onclick="document.getElementById('fileInput').click()"
+       ondragover="handleDragOver(event)"
+       ondragleave="handleDragLeave(event)"
+       ondrop="handleDrop(event)">
+    <span class="upload-icon">📄</span>
+    <div class="upload-title">Drop PDF here or click to browse</div>
+    <div class="upload-sub" style="display: none;"></div>
+    <button class="btn btn-primary" onclick="event.stopPropagation(); document.getElementById('fileInput').click()">
+      Choose File
+    </button>
+    <input type="file" id="fileInput" accept=".pdf" onchange="handleFileSelect(event)" />
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="results-bar">
+      <div class="results-meta">
+        <span class="chip green" id="badgeColleges"></span>
+        <span class="chip blue"  id="badgeCats"></span>
+        <span class="chip gray"  id="filterCountBadge" style="display:none;"></span>
+      </div>
+      <div class="results-actions">
+        <input type="text" id="docTitle" class="title-input" placeholder="Label (optional)" />
+        <button class="btn btn-outline" id="saveBtn" onclick="saveToDatabase()">💾 Save</button>
+        <button class="btn btn-success" id="downloadBtn" onclick="downloadExcel()">↓ Excel</button>
+        <button class="btn btn-outline" onclick="resetUpload()">✕ Close</button>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <input class="search-input" id="searchColleges" placeholder="Search college…" oninput="filterTable()" />
+      <select class="select-input" id="catFilter" onchange="filterTable()">
+        <option value="">All Categories</option>
+      </select>
+      <select class="select-input" id="rankFilter" onchange="filterTable()">
+        <option value="">Any Rank</option>
+        <option value="0-1000">≤ 1,000</option>
+        <option value="0-5000">≤ 5,000</option>
+        <option value="0-10000">≤ 10,000</option>
+        <option value="0-25000">≤ 25,000</option>
+        <option value="0-50000">≤ 50,000</option>
+        <option value="50000-200000">50K – 2L</option>
+        <option value="200000-9999999">> 2L</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table id="cutoffTable">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="section-head">
+    <h2>Previous</h2>
+    <div class="section-line"></div>
+    <button class="btn btn-outline" style="padding:6px 12px; font-size:0.78rem;" onclick="loadHistory()">Refresh</button>
+  </div>
+  <div id="historyGrid" class="history-grid"></div>
+
+  <div style="height:60px;"></div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay">
+  <div class="loader-ring"></div>
+  <div class="loader-text">Processing PDF…</div>
+  <div class="loader-sub" id="loaderSub">Scanning pages</div>
+  <div class="progress-wrap" id="progressWrap" style="margin-top: 0; width: 100%; max-width: 300px;">
+    <div class="progress-label">
+      <span id="progressLabel">Processing…</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  let currentDocId  = null;
+  let currentRecords = [];
+  let allCategories  = [];
+  let currentFilename = '';
+
+  // ── Drag & Drop ────────────────────────────────────────────────────────────
+  function handleDragOver(e) {
+    e.preventDefault();
+    document.getElementById('uploadZone').classList.add('dragover');
+  }
+  function handleDragLeave() {
+    document.getElementById('uploadZone').classList.remove('dragover');
+  }
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('uploadZone').classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.endsWith('.pdf')) uploadFile(file);
+    else showToast('Please drop a valid PDF file', 'error');
+  }
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) uploadFile(file);
+  }
+
+  // ── Upload ─────────────────────────────────────────────────────────────────
+  function uploadFile(file) {
+    const overlay   = document.getElementById('loadingOverlay');
+    const loaderSub = document.getElementById('loaderSub');
+    const progressWrap = document.getElementById('progressWrap');
+    const fill = document.getElementById('progressFill');
+    const lbl  = document.getElementById('progressLabel');
+    const pct  = document.getElementById('progressPct');
+
+    progressWrap.classList.add('active');
+    overlay.classList.add('active');
+    loaderSub.textContent = file.name;
+
+    let fake = 0;
+    const timer = setInterval(() => {
+      if (fake < 85) {
+        fake += Math.random() * 4;
+        fill.style.width = fake + '%';
+        pct.textContent  = Math.round(fake) + '%';
+        if      (fake < 30) lbl.textContent = 'Uploading…';
+        else if (fake < 60) lbl.textContent = 'Reading pages…';
+        else                lbl.textContent = 'Extracting…';
+      }
+    }, 300);
+
+    const fd = new FormData();
+    fd.append('file', file);
+
+    fetch('/api/upload', { method: 'POST', body: fd })
+      .then(r => r.json())
+      .then(data => {
+        clearInterval(timer);
+        fill.style.width = '100%';
+        pct.textContent  = '100%';
+        lbl.textContent  = 'Done';
+
+        setTimeout(() => {
+          overlay.classList.remove('active');
+          progressWrap.classList.remove('active');
+          fill.style.width = '0%';
+
+          if (data.error) {
+            showToast(data.error, 'error');
+          } else {
+            currentDocId    = data.doc_id;
+            currentRecords  = data.records;
+            allCategories   = data.categories;
+            currentFilename = file.name;
+            document.getElementById('docTitle').value = file.name.replace('.pdf','');
+            renderResults(data);
+            showToast(`${data.total_colleges} colleges · ${data.total_categories} categories`, 'success');
+          }
+        }, 500);
+      })
+      .catch(err => {
+        clearInterval(timer);
+        overlay.classList.remove('active');
+        progressWrap.classList.remove('active');
+        showToast('Upload failed: ' + err.message, 'error');
+      });
+  }
+
+  // ── Save ───────────────────────────────────────────────────────────────────
+  function saveToDatabase() {
+    if (!currentRecords.length) { showToast('No data to save', 'error'); return; }
+    const title = document.getElementById('docTitle').value.trim() || currentFilename;
+    const btn   = document.getElementById('saveBtn');
+    btn.innerHTML = '<span class="spinner dark"></span>';
+    btn.disabled  = true;
+
+    fetch('/api/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, filename: currentFilename, records: currentRecords })
+    })
+    .then(r => r.json())
+    .then(data => {
+      btn.innerHTML = '💾 Save';
+      btn.disabled  = false;
+      if (data.error) showToast(data.error, 'error');
+      else { currentDocId = data.doc_id; showToast('Saved', 'success'); loadHistory(); }
+    })
+    .catch(err => {
+      btn.innerHTML = '💾 Save';
+      btn.disabled  = false;
+      showToast(err.message, 'error');
+    });
+  }
+
+  // ── Render Results ─────────────────────────────────────────────────────────
+  function renderResults(data) {
+    const { records, categories } = data;
+
+    document.getElementById('badgeColleges').textContent = `🏫 ${data.total_colleges} Colleges`;
+    document.getElementById('badgeCats').textContent     = `🗂 ${data.total_categories} Categories`;
+
+    const catFilter = document.getElementById('catFilter');
+    catFilter.innerHTML = '<option value="">All Categories</option>';
+    categories.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = c;
+      catFilter.appendChild(o);
+    });
+
+    buildTable(records, categories);
+    const res = document.getElementById('results');
+    res.classList.add('show');
+    res.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function buildTable(records, categories) {
+    const thead = document.getElementById('tableHead');
+    const tbody = document.getElementById('tableBody');
+
+    let hHtml = '<tr>';
+    hHtml += '<th class="col-code">Code</th>';
+    hHtml += '<th class="col-name" style="text-align:left;">College</th>';
+    categories.forEach(c => { hHtml += `<th>${esc(c)}</th>`; });
+    hHtml += '</tr>';
+    thead.innerHTML = hHtml;
+
+    let bHtml = '';
+    records.forEach(r => {
+      bHtml += '<tr>';
+      bHtml += `<td class="col-code">${esc(r.college_code)}</td>`;
+      bHtml += `<td class="col-name">${esc(r.college_name)}</td>`;
+      categories.forEach(cat => {
+        const v = r.category_cutoffs[cat];
+        if (v) {
+          const cls = v <= 10000 ? 't1' : v <= 50000 ? 't2' : 't3';
+          bHtml += `<td class="rank-val ${cls}" data-rank="${v}">${v.toLocaleString('en-IN')}</td>`;
+        } else {
+          bHtml += `<td class="rank-val na" data-rank="9999999">—</td>`;
+        }
+      });
+      bHtml += '</tr>';
+    });
+    tbody.innerHTML = bHtml;
+  }
+
+  // ── Filter ─────────────────────────────────────────────────────────────────
+  function filterTable() {
+    if (!currentRecords.length) return;
+    const search     = document.getElementById('searchColleges').value.toLowerCase();
+    const catFilter  = document.getElementById('catFilter').value;
+    const rankFilter = document.getElementById('rankFilter').value;
+
+    let filtered = currentRecords;
+    if (search) {
+      filtered = filtered.filter(r =>
+        r.college_name.toLowerCase().includes(search) || r.college_code.includes(search)
+      );
+    }
+
+    let cats = allCategories;
+    if (catFilter) cats = allCategories.filter(c => c === catFilter);
+
+    if (rankFilter) {
+      const [a, b] = rankFilter.split('-').map(Number);
+      filtered = filtered.filter(r => {
+        const check = catFilter ? [catFilter] : allCategories;
+        return check.some(cat => { const v = r.category_cutoffs[cat]; return v && v >= a && v <= b; });
+      });
+    }
+
+    const badge = document.getElementById('filterCountBadge');
+    if (filtered.length < currentRecords.length) {
+      badge.textContent = `${filtered.length} of ${currentRecords.length}`;
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+
+    buildTable(filtered, cats);
+  }
+
+  // ── Download ───────────────────────────────────────────────────────────────
+  function downloadExcel() {
+    const btn = document.getElementById('downloadBtn');
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled  = true;
+    const restore = () => { btn.innerHTML = '↓ Excel'; btn.disabled = false; };
+
+    if (currentDocId) {
+      const a = document.createElement('a');
+      a.href = `/api/download/${currentDocId}`;
+      a.click();
+      setTimeout(restore, 2000);
+    } else {
+      fetch('/api/download-direct', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ records: currentRecords })
+      })
+      .then(r => { if (!r.ok) throw new Error('Download failed'); return r.blob(); })
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'cutoff_data.xlsx'; a.click();
+        URL.revokeObjectURL(url);
+        restore();
+      })
+      .catch(err => { showToast(err.message, 'error'); restore(); });
+    }
+  }
+
+  function downloadHistoryExcel(docId) { window.location.href = `/api/download/${docId}`; }
+
+  // ── Reset ──────────────────────────────────────────────────────────────────
+  function resetUpload() {
+    currentDocId   = null;
+    currentRecords = [];
+    allCategories  = [];
+    document.getElementById('results').classList.remove('show');
+    document.getElementById('fileInput').value = '';
+    document.getElementById('searchColleges').value = '';
+    document.getElementById('catFilter').innerHTML = '<option value="">All Categories</option>';
+    document.getElementById('filterCountBadge').style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── History ────────────────────────────────────────────────────────────────
+  async function loadHistory() {
+    try {
+      const docs = await fetch('/api/extractions').then(r => r.json());
+      const grid = document.getElementById('historyGrid');
+      if (!docs.length) {
+        grid.innerHTML = '<div style="color:var(--text3);font-size:0.82rem;">No saved extractions.</div>';
+        return;
+      }
+      grid.innerHTML = docs.map(d => `
+        <div class="history-card">
+          <h3 title="${esc(d.title || d.filename)}">${esc(d.title || d.filename)}</h3>
+          <div class="history-meta">
+            ${fmtDate(d.upload_time)}<br>
+            ${d.total_colleges || 0} colleges · ${d.total_categories || 0} categories
+          </div>
+          <div class="history-actions">
+            <button class="btn btn-outline" style="font-size:0.75rem;padding:6px 12px;" onclick="loadExtraction('${d._id}')">View</button>
+            <button class="btn btn-success"  style="font-size:0.75rem;padding:6px 12px;" onclick="downloadHistoryExcel('${d._id}')">↓ Excel</button>
+            <button class="btn btn-danger-soft" style="font-size:0.75rem;padding:6px 10px;" onclick="deleteExtraction('${d._id}')">✕</button>
+          </div>
+        </div>
+      `).join('');
+    } catch { showToast('Failed to load history', 'error'); }
+  }
+
+  async function loadExtraction(docId) {
+    const overlay   = document.getElementById('loadingOverlay');
+    const loaderSub = document.getElementById('loaderSub');
+    overlay.classList.add('active');
+    loaderSub.textContent = 'Loading…';
+    try {
+      const data = await fetch(`/api/extraction/${docId}`).then(r => r.json());
+      overlay.classList.remove('active');
+      if (data.error) { showToast(data.error, 'error'); return; }
+      currentDocId    = docId;
+      currentRecords  = data.records;
+      const cats = new Set();
+      data.records.forEach(r => Object.keys(r.category_cutoffs).forEach(c => cats.add(c)));
+      allCategories = [...cats].sort();
+      renderResults({ ...data, categories: allCategories, total_colleges: data.records.length, total_categories: allCategories.length });
+      showToast('Loaded', 'success');
+    } catch {
+      overlay.classList.remove('active');
+      showToast('Failed to load', 'error');
+    }
+  }
+
+  async function deleteExtraction(docId) {
+    if (!confirm('Delete this record?')) return;
+    await fetch(`/api/extraction/${docId}`, { method: 'DELETE' });
+    showToast('Deleted', 'success');
+    loadHistory();
+  }
+
+  // ── Utilities ──────────────────────────────────────────────────────────────
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }); }
+    catch { return iso; }
+  }
+
+  function showToast(msg, type = 'info') {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'i';
+    t.innerHTML = `<span style="font-weight:600;flex-shrink:0;">${icon}</span><span>${esc(msg)}</span>`;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 4200);
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  loadHistory();
+</script>
+</body>
+</html>
