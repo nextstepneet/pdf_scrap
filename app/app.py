@@ -24,9 +24,9 @@ app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024   # 50 MB max upload
 app.config["JSON_AS_ASCII"] = False
 CORS(app)
 
-MONGO_URI = (
-    "mongodb+srv://shaileshx006067_db_user:qmTowJMpLK063z7K"
-    "@cluster0.gdh76cd.mongodb.net/?appName=Cluster0"
+MONGO_URI = os.getenv(
+    "MONGODB_URI", 
+    "mongodb+srv://shaileshx006067_db_user:qmTowJMpLK063z7K@cluster0.gdh76cd.mongodb.net/?appName=Cluster0"
 )
 
 # Lazy MongoDB connection
