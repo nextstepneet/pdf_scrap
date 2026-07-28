@@ -227,6 +227,13 @@ def upload_pdf():
     except Exception as e:
         import traceback
         return _json({"error": str(e), "trace": traceback.format_exc()}, 500)
+    finally:
+        # Delete the PDF file to save space
+        if os.path.exists(fpath):
+            try:
+                os.remove(fpath)
+            except Exception:
+                pass
 
     if not records:
         return _json({"error": "No cutoff data extracted. Check PDF format."}, 422)

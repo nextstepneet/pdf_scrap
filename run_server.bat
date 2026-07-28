@@ -9,5 +9,5 @@ echo.
 set PYTHONPATH=E:\NextStepNeet\Lib\site-packages
 set PYTHONIOENCODING=utf-8
 cd /d "E:\NextStepNeet\app"
-C:\Python314\python.exe app.py
+C:\Users\USER\AppData\Local\Programs\Python\Python312\python.exe app.py
 pause
