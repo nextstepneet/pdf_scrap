@@ -487,10 +487,13 @@ def extract_cutoffs(pdf_path: str) -> list[dict]:
                 air           = int(m.group(1))
                 cat_quota_raw = m.group(2).strip()
                 col_code      = m.group(3)
-                col_name      = m.group(4).strip()
+                
+                # If PDF text merged with the next row, cut it off before the next Sr. No (which is followed by AIR and Roll No)
+                raw_name = m.group(4).strip()
+                col_name = re.split(r'\s+\d{1,6}\s+\d{1,7}\s+\d{8,}', raw_name)[0].strip()
 
-                # Prefer the longest / most complete college name seen
-                if col_code not in names or len(col_name) > len(names[col_code]):
+                # Prefer the longest / most complete college name seen, but ignore absurdly long merged glitches
+                if col_code not in names or (len(col_name) > len(names[col_code]) and len(col_name) < 100):
                     names[col_code] = col_name
 
                 quota = _extract_quota(cat_quota_raw)
