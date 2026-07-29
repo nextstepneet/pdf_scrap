@@ -537,7 +537,7 @@ def sort_categories(cats) -> list[str]:
 # Main extraction function
 # ==============================================================================
 
-def extract_cutoffs(pdf_path: str) -> list[dict]:
+def extract_cutoffs(pdf_path: str, progress_cb=None) -> list[dict]:
     """
     Parse the Maharashtra NEET CAP SCEL PDF and return a list of records:
 
@@ -566,47 +566,51 @@ def extract_cutoffs(pdf_path: str) -> list[dict]:
     # quotas that didn't resolve to a known canonical value
     unknown_cats: set[str] = set()
 
-    doc = pdfium.PdfDocument(pdf_path)
-    try:
-        for pg_idx in range(len(doc)):
-            page     = doc[pg_idx]
-            textpage = page.get_textpage()
-            text     = textpage.get_text_range()
-            textpage.close()
-            page.close()
+    # First get total pages
+    tmp_doc = pdfium.PdfDocument(pdf_path)
+    total_pages = len(tmp_doc)
+    tmp_doc.close()
 
-            if not text:
-                continue
+    chunk_size = 50
+    for chunk_start in range(0, total_pages, chunk_size):
+        chunk_end = min(chunk_start + chunk_size, total_pages)
+        doc = pdfium.PdfDocument(pdf_path)
+        try:
+            for pg_idx in range(chunk_start, chunk_end):
+                if progress_cb and pg_idx % 5 == 0:
+                    progress_cb(pg_idx, total_pages)
+                    
+                page     = doc[pg_idx]
+                textpage = page.get_textpage()
+                text     = textpage.get_text_range()
+                textpage.close()
+                page.close()
 
-            if pg_idx > 0 and pg_idx % 50 == 0:
-                gc.collect()
-
-            raw_lines = text.split("\n")
-
-            # ── Pass 1: join name-continuation lines ──────────────────────────
-            # When a college name is too long the PDF wraps it to the next line.
-            # We detect known continuation patterns and concatenate them to the
-            # preceding data line.
-            joined: list[str] = []
-            for raw_line in raw_lines:
-                stripped = raw_line.strip()
-                if _NAME_CONTINUATION_RE.match(stripped) and joined:
-                    # Append continuation to the previous line
-                    joined[-1] = joined[-1].rstrip() + " " + stripped
-                else:
-                    joined.append(raw_line)
-
-            # ── Pass 2: parse joined lines ────────────────────────────────────
-            for raw_line in joined:
-                line = raw_line.strip()
-
-                # Fast skip: blank lines
-                if not line:
+                if not text:
                     continue
 
-                # Skip header / footer / legend boilerplate
-                if any(line.startswith(p) for p in _SKIP_PREFIXES):
-                    continue
+                raw_lines = text.split("\n")
+
+                # ── Pass 1: join name-continuation lines ──────────────────────────
+                joined: list[str] = []
+                for raw_line in raw_lines:
+                    stripped = raw_line.strip()
+                    if _NAME_CONTINUATION_RE.match(stripped) and joined:
+                        joined[-1] = joined[-1].rstrip() + " " + stripped
+                    else:
+                        joined.append(raw_line)
+
+                # ── Pass 2: parse joined lines ────────────────────────────────────
+                for raw_line in joined:
+                    line = raw_line.strip()
+
+                    # Fast skip: blank lines
+                    if not line:
+                        continue
+
+                    # Skip header / footer / legend boilerplate
+                    if any(line.startswith(p) for p in _SKIP_PREFIXES):
+                        continue
 
                 # Skip separator lines
                 if "------" in line or "======" in line:

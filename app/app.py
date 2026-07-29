@@ -4,6 +4,8 @@ import re
 import json
 import ssl
 from datetime import datetime
+import threading
+import uuid
 
 from flask import Flask, request, send_file, render_template
 from flask_cors import CORS
@@ -221,6 +223,8 @@ def index():
     return render_template("index.html")
 
 
+tasks = {}
+
 @app.route("/api/upload", methods=["POST"])
 def upload_pdf():
     if "file" not in request.files:
@@ -234,38 +238,54 @@ def upload_pdf():
     fpath = os.path.join(UPLOAD_FOLDER, fname)
     file.save(fpath)
 
-    try:
-        records = extract_cutoffs(fpath)
-    except Exception as e:
-        import traceback
-        return _json({"error": str(e), "trace": traceback.format_exc()}, 500)
-    finally:
-        # Delete the PDF file to save space
-        if os.path.exists(fpath):
-            try:
-                os.remove(fpath)
-            except Exception:
-                pass
+    task_id = str(uuid.uuid4())
+    tasks[task_id] = {"status": "processing", "progress": 0, "result": None, "error": None}
 
-    if not records:
-        return _json({"error": "No cutoff data extracted. Check PDF format."}, 422)
+    def run_task(fpath, t_id):
+        try:
+            def prog_cb(curr, tot):
+                tasks[t_id]["progress"] = int((curr / tot) * 100)
+                
+            records = extract_cutoffs(fpath, progress_cb=prog_cb)
+            
+            if not records:
+                tasks[t_id]["status"] = "error"
+                tasks[t_id]["error"] = "No cutoff data extracted. Check PDF format."
+                return
 
-    all_cats: set = set()
-    for r in records:
-        all_cats.update(r["category_cutoffs"].keys())
+            all_cats: set = set()
+            for r in records:
+                all_cats.update(r["category_cutoffs"].keys())
 
-    # Skip auto DB save; wait for user to explicitly save via /api/save
-    doc_id = None
+            tasks[t_id]["result"] = {
+                "success":          True,
+                "doc_id":           None,
+                "db_saved":         False,
+                "total_colleges":   len(records),
+                "total_categories": len(all_cats),
+                "categories":       sort_categories(all_cats),
+                "records":          records,
+            }
+            tasks[t_id]["status"] = "done"
+            
+        except Exception as e:
+            import traceback
+            tasks[t_id]["status"] = "error"
+            tasks[t_id]["error"] = str(e)
+            tasks[t_id]["trace"] = traceback.format_exc()
+        finally:
+            if os.path.exists(fpath):
+                try: os.remove(fpath)
+                except: pass
 
-    return _json({
-        "success":          True,
-        "doc_id":           doc_id,          # will be None on initial upload
-        "db_saved":         False,
-        "total_colleges":   len(records),
-        "total_categories": len(all_cats),
-        "categories":       sort_categories(all_cats),
-        "records":          records,
-    })
+    threading.Thread(target=run_task, args=(fpath, task_id)).start()
+    return _json({"task_id": task_id, "status": "processing"})
+
+@app.route("/api/upload/status/<task_id>", methods=["GET"])
+def upload_status(task_id):
+    if task_id not in tasks:
+        return _json({"error": "Task not found"}, 404)
+    return _json(tasks[task_id])
 
 
 @app.route("/api/extractions", methods=["GET"])

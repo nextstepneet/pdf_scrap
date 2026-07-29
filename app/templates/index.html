@@ -654,41 +654,76 @@
       .then(async r => {
         const contentType = r.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
-          const errText = await r.text();
-          throw new Error(`Server error (${r.status}): Please ensure the file size is within limits.`);
+          let errText = await r.text();
+          errText = errText.replace(/<[^>]*>?/gm, '').trim().substring(0, 60);
+          throw new Error(`Server Error (${r.status}): ${errText || 'Non-JSON response'}`);
         }
         return r.json();
       })
       .then(data => {
-        clearInterval(timer);
-        fill.style.width = '100%';
-        pct.textContent  = '100%';
-        lbl.textContent  = 'Done';
-
-        setTimeout(() => {
-          overlay.classList.remove('active');
-          progressWrap.classList.remove('active');
-          fill.style.width = '0%';
-
-          if (data.error) {
-            showToast(data.error, 'error');
-          } else {
-            currentDocId    = data.doc_id;
-            currentRecords  = data.records;
-            allCategories   = data.categories;
-            currentFilename = file.name;
-            document.getElementById('docTitle').value = file.name.replace('.pdf','');
-            renderResults(data);
-            showToast(`${data.total_colleges} colleges · ${data.total_categories} categories`, 'success');
-          }
-        }, 500);
+        if (data.error) throw new Error(data.error);
+        if (data.task_id) {
+          pollTask(data.task_id);
+        } else {
+          handleUploadResult(data);
+        }
       })
-      .catch(err => {
-        clearInterval(timer);
+      .catch(handleUploadError);
+
+    function pollTask(taskId) {
+      fetch('/api/upload/status/' + taskId)
+        .then(r => r.json())
+        .then(res => {
+          if (res.error) throw new Error(res.error);
+          if (res.status === 'processing') {
+            if (res.progress > 0) {
+              clearInterval(timer);
+              fill.style.width = res.progress + '%';
+              pct.textContent  = res.progress + '%';
+              lbl.textContent  = 'Extracting...';
+            }
+            setTimeout(() => pollTask(taskId), 2000);
+          } else if (res.status === 'done') {
+            clearInterval(timer);
+            handleUploadResult(res.result);
+          } else if (res.status === 'error') {
+            throw new Error(res.error || 'Server processing error');
+          }
+        })
+        .catch(handleUploadError);
+    }
+
+    function handleUploadResult(data) {
+      clearInterval(timer);
+      fill.style.width = '100%';
+      pct.textContent  = '100%';
+      lbl.textContent  = 'Done';
+
+      setTimeout(() => {
         overlay.classList.remove('active');
         progressWrap.classList.remove('active');
-        showToast('Upload failed: ' + err.message, 'error');
-      });
+        fill.style.width = '0%';
+
+        if (data.error) {
+          showToast(data.error, 'error');
+        } else {
+          currentDocId    = data.doc_id;
+          currentRecords  = data.records;
+          allCategories   = data.categories;
+          currentFilename = file.name;
+          document.getElementById('docTitle').value = file.name.replace('.pdf','');
+          renderResults(data);
+          showToast(`${data.total_colleges} colleges · ${data.total_categories} categories`, 'success');
+        }
+      }, 500);
+    }
+
+    function handleUploadError(err) {
+      clearInterval(timer);
+      overlay.classList.remove('active');
+      progressWrap.classList.remove('active');
+      showToast('Upload failed: ' + err.message, 'error');
+    }
   }
 
   // ── Save ───────────────────────────────────────────────────────────────────
