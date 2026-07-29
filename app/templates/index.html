@@ -492,6 +492,13 @@
       .container { padding: 20px 1rem; }
       .upload-card { padding: 32px 16px; }
       .results-bar { flex-direction: column; align-items: flex-start; }
+      
+      /* Make the college name non-sticky on mobile so user can scroll right to see data */
+      thead th.col-name,
+      tbody td.col-name {
+        position: static;
+        min-width: 180px;
+      }
     }
   </style>
 </head>
