@@ -612,48 +612,48 @@ def extract_cutoffs(pdf_path: str, progress_cb=None) -> list[dict]:
                     if any(line.startswith(p) for p in _SKIP_PREFIXES):
                         continue
 
-                # Skip separator lines
-                if "------" in line or "======" in line:
-                    continue
+                    # Skip separator lines
+                    if "------" in line or "======" in line:
+                        continue
 
-                # Skip "Choice Not Available" rows — these candidates made no
-                # college choices so there is no college code to record.
-                if _CNA_RE.match(line):
-                    continue
+                    # Skip "Choice Not Available" rows — these candidates made no
+                    # college choices so there is no college code to record.
+                    if _CNA_RE.match(line):
+                        continue
 
-                m = _FLEX_RE.match(line)
-                if not m:
-                    continue
+                    m = _FLEX_RE.match(line)
+                    if not m:
+                        continue
 
-                air           = int(m.group(1))
-                cat_quota_raw = m.group(2).strip()
-                col_code      = m.group(3)
+                    air           = int(m.group(1))
+                    cat_quota_raw = m.group(2).strip()
+                    col_code      = m.group(3)
 
-                # If PDF text merged with the next row, cut it off at the
-                # next Sr. No. pattern  (Sr\d+ AIR Roll AppNo)
-                raw_name = m.group(4).strip()
-                col_name = re.split(r"\s+\d{1,6}\s+\d{1,7}\s+\d{8,}", raw_name)[0].strip()
+                    # If PDF text merged with the next row, cut it off at the
+                    # next Sr. No. pattern  (Sr\d+ AIR Roll AppNo)
+                    raw_name = m.group(4).strip()
+                    col_name = re.split(r"\s+\d{1,6}\s+\d{1,7}\s+\d{8,}", raw_name)[0].strip()
 
-                # Prefer longest / most complete college name seen, but cap at
-                # 120 chars to avoid merging glitches
-                if col_code not in names or (
-                    len(col_name) > len(names[col_code]) and len(col_name) < 120
-                ):
-                    names[col_code] = col_name
+                    # Prefer longest / most complete college name seen, but cap at
+                    # 120 chars to avoid merging glitches
+                    if col_code not in names or (
+                        len(col_name) > len(names[col_code]) and len(col_name) < 120
+                    ):
+                        names[col_code] = col_name
 
-                quota = _extract_quota(cat_quota_raw)
-                if not quota:
-                    continue
+                    quota = _extract_quota(cat_quota_raw)
+                    if not quota:
+                        continue
 
-                # Closing rank = highest (worst) AIR seen for this cell
-                if air > data[col_code][quota]:
-                    data[col_code][quota] = air
+                    # Closing rank = highest (worst) AIR seen for this cell
+                    if air > data[col_code][quota]:
+                        data[col_code][quota] = air
 
-                if quota not in _QUOTA_VALUES:
-                    unknown_cats.add(f"{quota!r} (raw={cat_quota_raw!r})")
+                    if quota not in _QUOTA_VALUES:
+                        unknown_cats.add(f"{quota!r} (raw={cat_quota_raw!r})")
 
-    finally:
-        doc.close()
+        finally:
+            doc.close()
 
     records = [
         {
