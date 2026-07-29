@@ -7,6 +7,7 @@ from datetime import datetime
 
 from flask import Flask, request, send_file, render_template
 from flask_cors import CORS
+from werkzeug.exceptions import HTTPException
 from pymongo import MongoClient
 from bson import ObjectId
 import openpyxl
@@ -200,6 +201,17 @@ def _json(data, status=200):
         mimetype="application/json",
     )
 
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    if request.path.startswith("/api/"):
+        if isinstance(e, HTTPException):
+            return _json({"error": e.description}, e.code)
+        import traceback
+        return _json({"error": str(e), "trace": traceback.format_exc()}, 500)
+    if isinstance(e, HTTPException):
+        return e
+    return "Internal Server Error", 500
 
 # ─────────────────────────────────────────────────
 # Routes

@@ -651,7 +651,14 @@
     fd.append('file', file);
 
     fetch('/api/upload', { method: 'POST', body: fd })
-      .then(r => r.json())
+      .then(async r => {
+        const contentType = r.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const errText = await r.text();
+          throw new Error(`Server error (${r.status}): Please ensure the file size is within limits.`);
+        }
+        return r.json();
+      })
       .then(data => {
         clearInterval(timer);
         fill.style.width = '100%';
