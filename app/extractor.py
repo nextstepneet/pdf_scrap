@@ -21,6 +21,7 @@ import re
 from collections import defaultdict
 from typing import Optional
 import pypdfium2 as pdfium
+import gc
 
 # ==============================================================================
 # Canonical quota map
@@ -565,10 +566,7 @@ def extract_cutoffs(pdf_path: str) -> list[dict]:
     # quotas that didn't resolve to a known canonical value
     unknown_cats: set[str] = set()
 
-    with open(pdf_path, "rb") as f:
-        pdf_bytes = f.read()
-
-    doc = pdfium.PdfDocument(pdf_bytes)
+    doc = pdfium.PdfDocument(pdf_path)
     try:
         for pg_idx in range(len(doc)):
             page     = doc[pg_idx]
@@ -579,6 +577,9 @@ def extract_cutoffs(pdf_path: str) -> list[dict]:
 
             if not text:
                 continue
+
+            if pg_idx > 0 and pg_idx % 50 == 0:
+                gc.collect()
 
             raw_lines = text.split("\n")
 
