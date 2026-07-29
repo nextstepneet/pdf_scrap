@@ -1,0 +1,477 @@
+﻿======================================================================
+PDF DEEP AUDIT REPORT
+======================================================================
+Total pages   : 1106
+Total lines   : 62955
+  Blank       : 0
+  Header/skip : 13272
+  Separator   : 4425
+  Data (regex): 10815
+  No-match    : 34443
+
+======================================================================
+RESOLVED CATEGORIES (73 unique)
+======================================================================
+  Γ£ô  'DEF1'  (rows: 91)
+        raw: 'D1 DEF1'
+        raw: 'D1HA DEF1'
+        raw: 'EWS D1 DEF1'
+        raw: 'NTC D1 DEF1'
+        raw: 'NTD D1 DEF1'
+  Γ£ô  'DEF1 (W)'  (rows: 38)
+        raw: 'D1 DEF1 W'
+        raw: 'EWS D1 DEF1 W'
+        raw: 'NTC D1 DEF1 W'
+        raw: 'NTD D1 DEF1 W'
+        raw: 'NTD D1HA DEF1 W'
+  Γ£ô  'DEF2'  (rows: 32)
+        raw: 'D2 DEF2'
+        raw: 'NTC D2 DEF2'
+        raw: 'NTD D2 DEF2'
+        raw: 'OBC D2 DEF2'
+        raw: 'SEBCD2 DEF2'
+  Γ£ô  'DEF2 (W)'  (rows: 13)
+        raw: 'D2 DEF2 W'
+        raw: 'NTD D2 DEF2 W'
+        raw: 'OBC D2 DEF2 W'
+        raw: 'SEBCD2 DEF2 W'
+  Γ£ô  'DEF3'  (rows: 27)
+        raw: 'D3 DEF3'
+  Γ£ô  'DEF3 (W)'  (rows: 12)
+        raw: 'D3 DEF3 W'
+  Γ£ô  'EWS'  (rows: 325)
+        raw: 'EWS EWS'
+        raw: 'EWS HA EWS'
+  Γ£ô  'EWS (W)'  (rows: 153)
+        raw: 'EWS EWS(W)'
+        raw: 'EWS HA EWS(W)'
+  Γ£ô  'HA-OPEN (W)'  (rows: 13)
+        raw: 'HA HOPENW'
+        raw: 'OBC HA HOPENW'
+        raw: 'OBC HA HOPENW (EMD)'
+        raw: 'SEBCHA HOPENW'
+  Γ£ô  'HEWS'  (rows: 11)
+        raw: 'EWS HA HEWS'
+  Γ£ô  'HEWS (W)'  (rows: 4)
+        raw: 'EWS HA HEWS W'
+  Γ£ô  'HNTB'  (rows: 3)
+        raw: 'NTB HA HNTB'
+  Γ£ô  'HNTB (W)'  (rows: 1)
+        raw: 'NTB HA HNTB W'
+  Γ£ô  'HNTC'  (rows: 3)
+        raw: 'NTC HA HNTC'
+  Γ£ô  'HNTC (W)'  (rows: 2)
+        raw: 'NTC HA HNTC W'
+  Γ£ô  'HNTD'  (rows: 2)
+        raw: 'NTD HA HNTD'
+  Γ£ô  'HNTD (W)'  (rows: 1)
+        raw: 'NTD HA HNTD W'
+  Γ£ô  'HOBC'  (rows: 19)
+        raw: 'OBC HA HOBC'
+  Γ£ô  'HOBC (W)'  (rows: 8)
+        raw: 'OBC HA HEM OBCW (EMR)'
+        raw: 'OBC HA HOBC W'
+        raw: 'SOBC HA HOBC W'
+  Γ£ô  'HOPEN'  (rows: 31)
+        raw: 'HA HOPEN'
+        raw: 'NTD HA HOPEN'
+        raw: 'OBC HA HOPEN'
+        raw: 'OBC HA HOPEN (EMD)'
+  Γ£ô  'HSC'  (rows: 13)
+        raw: 'SC HA HSC'
+  Γ£ô  'HSC (W)'  (rows: 6)
+        raw: 'SC HA HSCW'
+  Γ£ô  'HSEBC'  (rows: 10)
+        raw: 'SEBCHA HSEBC'
+  Γ£ô  'HSEBC (W)'  (rows: 5)
+        raw: 'SEBCHA HSEBC W'
+  Γ£ô  'HST'  (rows: 7)
+        raw: 'ST HA HST'
+  Γ£ô  'HST (W)'  (rows: 3)
+        raw: 'ST HA HSTW'
+  Γ£ô  'HVJA'  (rows: 3)
+        raw: 'VJA HA HVJA'
+  Γ£ô  'HVJA (W)'  (rows: 1)
+        raw: 'VJA HA HVJAW'
+  Γ£ô  'I.Q.'  (rows: 809)
+        raw: 'D1 I.Q.'
+        raw: 'D2 I.Q.'
+        raw: 'D3 I.Q.'
+        raw: 'EWS HA I.Q.'
+        raw: 'EWS I.Q.'
+  Γ£ô  'I.Q. MINO'  (rows: 36)
+        raw: 'EWS D2 I.Q. MINO'
+        raw: 'EWS HA I.Q. MINO'
+        raw: 'EWS I.Q. MINO'
+        raw: 'I.Q. MINO'
+        raw: 'OBC I.Q. MINO'
+  Γ£ô  'MKB'  (rows: 7)
+        raw: 'MKB MKB'
+  Γ£ô  'MKB (W)'  (rows: 3)
+        raw: 'MKB MKB W'
+  Γ£ô  'NT-B'  (rows: 129)
+        raw: 'NTB D1 EMNTB (EMR)'
+        raw: 'NTB D1 NTB'
+        raw: 'NTB EMNTB (EMR)'
+        raw: 'NTB HA NTB'
+        raw: 'NTB NTB'
+  Γ£ô  'NT-B (W)'  (rows: 57)
+        raw: 'NTB D1 NTB(W)'
+        raw: 'NTB EMNTBW (EMR)'
+        raw: 'NTB HA NTB(W)'
+        raw: 'NTB NTB(W)'
+  Γ£ô  'NT-C'  (rows: 180)
+        raw: 'NTC EMNTC (EMR)'
+        raw: 'NTC HA EMNTC (EMR)'
+        raw: 'NTC HA NTC'
+        raw: 'NTC NTC'
+  Γ£ô  'NT-C (W)'  (rows: 82)
+        raw: 'NTC D1 EMNTCW (EMR)'
+        raw: 'NTC EMNTCW (EMR)'
+        raw: 'NTC HA NTC(W)'
+        raw: 'NTC NTC(W)'
+  Γ£ô  'NT-D'  (rows: 103)
+        raw: 'NTD EMNTD (EMR)'
+        raw: 'NTD HA EMNTD (EMR)'
+        raw: 'NTD NTD'
+  Γ£ô  'NT-D (W)'  (rows: 46)
+        raw: 'NTD D1 EMNTDW (EMR)'
+        raw: 'NTD EMNTDW (EMR)'
+        raw: 'NTD HA NTD(W)'
+        raw: 'NTD NTD(W)'
+  Γ£ô  'OBC'  (rows: 976)
+        raw: 'OBC D1 EMOBC (EMR)'
+        raw: 'OBC D2 EMOBC (EMR)'
+        raw: 'OBC EMOBC (EMR)'
+        raw: 'OBC HA EMOBC (EMR)'
+        raw: 'OBC HA HEM OBC (EMR)'
+  Γ£ô  'OBC (W)'  (rows: 444)
+        raw: 'OBC D1 EMOBCW (EMR)'
+        raw: 'OBC EMOBCW (EMR)'
+        raw: 'OBC HA EMOBCW (EMR)'
+        raw: 'OBC HA OBC(W)'
+        raw: 'OBC OBC(W)'
+  Γ£ô  'OPEN'  (rows: 2750)
+        raw: 'D1 OPEN'
+        raw: 'D2 OPEN'
+        raw: 'D3 OPEN'
+        raw: 'EWS HA OPEN'
+        raw: 'EWS OPEN'
+  Γ£ô  'OPEN (W)'  (rows: 1220)
+        raw: 'D1 OPEN (W)'
+        raw: 'D1HA OPEN (W)'
+        raw: 'D2 OPEN (W)'
+        raw: 'D3 OPEN (W)'
+        raw: 'EWS D1 OPEN (W)'
+  Γ£ô  'OPEN (W) MINO'  (rows: 63)
+        raw: 'EWS OPEN (W) MINO'
+        raw: 'HA OPEN (W) MINO'
+        raw: 'OBC HA OPEN (W) MINO'
+        raw: 'OBC OPEN (W) MINO'
+        raw: 'OPEN (W) MINO'
+  Γ£ô  'OPEN MINO'  (rows: 149)
+        raw: 'EWS OPEN MINO'
+        raw: 'OBC OPEN MINO'
+        raw: 'OPEN MINO'
+  Γ£ô  'ORPHAN-A'  (rows: 2)
+        raw: 'OBC ORP-A ORPHAN Orphan-A'
+        raw: 'ORP-A ORPHAN Orphan-A'
+  Γ£ô  'ORPHAN-A NT-C'  (rows: 1)
+        raw: 'NTC ORP-A ORPHAN-NTC Orphan-A NT2'
+  Γ£ô  'ORPHAN-A OBC'  (rows: 1)
+        raw: 'OBC ORP-A ORPHAN-OBC Orphan-A OBC'
+  Γ£ô  'ORPHAN-C'  (rows: 9)
+        raw: 'EWS ORP-C ORPHANC OrphanC'
+        raw: 'NTD ORP-C ORPHANC OrphanC'
+        raw: 'ORP-C ORPHANC OrphanC'
+        raw: 'SC ORP-C ORPHANC OrphanC'
+        raw: 'VJA ORP-C ORPHANC OrphanC'
+  Γ£ô  'ORPHAN-C NT-B'  (rows: 1)
+        raw: 'NTB ORP-C ORPHANC-NT Orphan-C NT1'
+  Γ£ô  'ORPHAN-C NT-C'  (rows: 1)
+        raw: 'NTC ORP-C ORPHANC-NT Orphan-C NT2'
+  Γ£ô  'ORPHAN-C OBC'  (rows: 5)
+        raw: 'OBC ORP-C ORPHANC-OB Orphan-C OBC'
+  Γ£ô  'ORPHAN-C SC'  (rows: 3)
+        raw: 'SC ORP-C ORPHANC-SC Orphan-C SC'
+  Γ£ô  'ORPHAN-C SEBC'  (rows: 3)
+        raw: 'SEBCORP-C ORPHANC-SE Orphan-C SEBC'
+  Γ£ô  'ORPHAN-C ST'  (rows: 1)
+        raw: 'ST ORP-C ORPHANC-ST Orphan-C ST'
+  Γ£ô  'ORPHAN-C VJ-A'  (rows: 1)
+        raw: 'VJA ORP-C ORPHANC-VJ Orphan-C VJ'
+  Γ£ô  'PWD-EWS'  (rows: 20)
+        raw: 'EWS PWD PWD-EWS PH'
+  Γ£ô  'PWD-NTB'  (rows: 6)
+        raw: 'NTB PWD PWD-NTB PH'
+  Γ£ô  'PWD-NTC'  (rows: 9)
+        raw: 'NTC PWD PEM NTC PH (EMR)'
+        raw: 'NTC PWD PWD-NTC PH'
+  Γ£ô  'PWD-NTD'  (rows: 5)
+        raw: 'NTD PWD PWD-NTD PH'
+  Γ£ô  'PWD-OBC'  (rows: 50)
+        raw: 'OBC PWD HA PWD-OBC PH'
+        raw: 'OBC PWD PEM OBC PH (EMR)'
+        raw: 'OBC PWD PWD-OBC PH'
+        raw: 'SOBC PWD PEM OBC PH (EMR)'
+        raw: 'SOBC PWD PWD-OBC PH'
+  Γ£ô  'PWD-OPEN'  (rows: 79)
+        raw: 'EWS PWD PWD-OPEN PH'
+        raw: 'NTB PWD PWD-OPEN PH'
+        raw: 'NTC PWD PWD-OPEN (EMD)'
+        raw: 'NTC PWD PWD-OPEN PH'
+        raw: 'OBC PWD HA PWD-OPEN (EMD)'
+  Γ£ô  'PWD-SC'  (rows: 33)
+        raw: 'SC PWD HA PWD-SC PH'
+        raw: 'SC PWD PEM SC PH (EMR)'
+        raw: 'SC PWD PWD-SC PH'
+  Γ£ô  'PWD-SEBC'  (rows: 25)
+        raw: 'SEBCPWD HA PWD-SEBC PH'
+        raw: 'SEBCPWD PEM SEBC PH (EMR)'
+        raw: 'SEBCPWD PWD-SEBC PH'
+  Γ£ô  'PWD-ST'  (rows: 12)
+        raw: 'ST PWD HA PWD-ST PH'
+        raw: 'ST PWD PWD-ST PH'
+  Γ£ô  'PWD-VJA'  (rows: 7)
+        raw: 'VJA PWD PWD-VJA PH'
+  Γ£ô  'SC'  (rows: 667)
+        raw: 'SC D1 EMSC (EMR)'
+        raw: 'SC D1 SC'
+        raw: 'SC D1HA SC'
+        raw: 'SC D2 EMSC (EMR)'
+        raw: 'SC D2 SC'
+  Γ£ô  'SC (W)'  (rows: 303)
+        raw: 'SC D1 SC (W)'
+        raw: 'SC EMSCW (EMR)'
+        raw: 'SC HA SC (W)'
+        raw: 'SC SC (W)'
+  Γ£ô  'SEBC'  (rows: 645)
+        raw: 'AMBEKAR F SEBC SEBC'
+        raw: 'SEBC EMSEBC (EMR)'
+        raw: 'SEBC SEBC'
+        raw: 'SEBCD1 EMSEBC (EMR)'
+        raw: 'SEBCD1 SEBC'
+  Γ£ô  'SEBC (W)'  (rows: 289)
+        raw: 'SEBC EMSEBCW (EMR)'
+        raw: 'SEBC SEBC(W)'
+        raw: 'SEBCD1 SEBC(W)'
+        raw: 'SEBCHA EMSEBCW (EMR)'
+        raw: 'SEBCHA SEBC(W)'
+  Γ£ô  'ST'  (rows: 358)
+        raw: 'ST D1 ST'
+        raw: 'ST HA ST'
+        raw: 'ST ST'
+  Γ£ô  'ST (W)'  (rows: 163)
+        raw: 'JAMBHULE F ST ST (W)'
+        raw: 'ST D1 ST (W)'
+        raw: 'ST D2 ST (W)'
+        raw: 'ST HA ST (W)'
+        raw: 'ST ST (W)'
+  Γ£ô  'VJ-A'  (rows: 154)
+        raw: 'VJA EMVJA (EMR)'
+        raw: 'VJA HA VJA'
+        raw: 'VJA VJA'
+  Γ£ô  'VJ-A (W)'  (rows: 71)
+        raw: 'VJA EMVJAW (EMR)'
+        raw: 'VJA HA VJA (W)'
+        raw: 'VJA VJA (W)'
+
+======================================================================
+LINES NOT MATCHED BY REGEX (34443 total, 27565 unique)
+======================================================================
+  [1106x] '2. Last Date to fill the Status Retention Form at College: 22/08/2025 upto 5.30 pm(Excluding 15/08/2025 & 16/08/2025).'
+  [1106x] '3. Admitting Institute will verify the original documents and ascertain eligibility of the candidates as per the NEET(UG'
+  [1106x] '4. This Provisional Selection is done on the basis of information given by the candidate in the application form and the'
+  [1106x] '5. Candidate should submit all the original documents as per his/her claim and pay requisite fees in the selected colleg'
+  [1106x] '6. This seat allotment is conducted on the seat(s) that are approved/permitted by MCI/NMC/DCI and affiliated to MUHS,Nas'
+  [1106x] 'F:Female W:Women Quota EMD: EarMarking Donor, EMR: EarMarking Receiver'
+  [ 200x] "AHILYANAGAR(A'NAGAR)"
+  [  50x] 'CH.SAMBHAJINAGAR'
+  [   1x] '113 1620 3112211157 256015984 RISHIRAJSINGH BISEN M Choice Not Available'
+  [   1x] '139 1863 3114106180 256001582 ATHARVA SHETTIGAR M Choice Not Available'
+  [   1x] '293 3777 3115404158 256011619 ISHAN AUTI M Choice Not Available'
+  [   1x] '341 4357 3129105052 256015737 MAURYA RITIK ARVIND M Choice Not Available'
+  [   1x] '346 4424 3114101018 256044118 NIPUN DAN M Choice Not Available'
+  [   1x] '392 5015 3103102508 256034485 AADHYA SANJEEV KUMAR PRASAD F Choice Not Available'
+  [   1x] '400 5147 3111115007 256019519 DIPTI SINGH F Choice Not Available'
+  [   1x] '414 5291 3110312047 256031033 SABIHA SHARFUDDIN F Choice Not Available'
+  [   1x] '443 5680 3110211019 256014644 SHAIKH SHAMS AALAM MOHD ALEEM M Choice Not Available'
+  [   1x] '583 7397 3129110158 256031466 PATEL NITESH ASLARAM M Choice Not Available'
+  [   1x] '639 8163 3110317078 256018117 SIDDHESH GORAKHNATH RAJURE M Choice Not Available'
+  [   1x] '647 8226 3110210223 256028341 RITIK RAJESH RAVARIYA M Choice Not Available'
+  [   1x] '667 8497 3126106213 256008641 TINA KAWARE F Choice Not Available'
+  [   1x] '673 8546 3110402188 256006549 ARYA GIRISH YADAV F Choice Not Available'
+  [   1x] '677 8621 3110409077 256035903 VARSHA OMPRAKASH VISHNOI F Choice Not Available'
+  [   1x] '719 9202 3110307110 256037467 DAKSH DOSHI M Choice Not Available'
+  [   1x] '744 9534 3110103047 256011965 PUSHKAR RANJAN M Choice Not Available'
+  [   1x] '802 10309 3111101138 256011448 SAMRUDDHI JAIN F Choice Not Available'
+  [   1x] '815 10454 3115206022 256000272 NAVYA PANKAJ SONI F Choice Not Available'
+  [   1x] '881 11414 3110305029 256000661 ABDEALI SHABBIR UNWALA M Choice Not Available'
+  [   1x] '892 11589 3110114083 256000297 TIRTHA SATHEESAN NAIR F Choice Not Available'
+  [   1x] '907 11764 3114102106 256013140 SOUVIK RAKSHIT M Choice Not Available'
+  [   1x] '934 12074 3115306401 256016206 AASTHA BHAT F Choice Not Available'
+  [   1x] '954 12309 3110311414 256050616 AARYAN BALASAHEB SHINDE M Choice Not Available'
+  [   1x] '986 12684 3110408466 256017842 IBRAHEEM M Choice Not Available'
+  [   1x] '988 12705 3118108016 256038075 SHAKYA SHAILENDRA KUMAR F Choice Not Available'
+  [   1x] '1008 12994 3113110063 256027764 DAKSH CHAUHAN M Choice Not Available'
+  [   1x] '1010 13012 3110206271 256012322 DIPALI PRAMOD REDIJ F Choice Not Available'
+  [   1x] '1012 13033 3129108177 256017226 RAHUL THANARAM SIRVI M Choice Not Available'
+  [   1x] '1050 13612 3111103408 256015825 BHUMIKA RAJESH RANJAN F Choice Not Available'
+  [   1x] '1055 13672 3902107154 256054309 CHARVI GUPTA F Choice Not Available'
+  [   1x] '1063 13855 3115407227 256033488 SRINIDHI NARAYANAN F Choice Not Available'
+  [   1x] '1077 14031 3118103107 256028933 ASHUTOSH NANDA M Choice Not Available'
+  [   1x] '1085 14177 3110418028 256000165 DIYA DHARMESH MAKWANA F Choice Not Available'
+  [   1x] '1116 14739 3115307232 256052818 DIGVIJAYSINGH NILESH JAGTAP M Choice Not Available'
+  [   1x] '1118 14746 3904407232 256020490 CHAUDHARY NIMBARAM RAMARAM M Choice Not Available'
+  [   1x] '1132 14888 3111201133 256000559 SARAH CHAUS F Choice Not Available'
+  [   1x] '1187 15538 3110412446 256000267 SIDDIQUI MEHVISH IMTIYAZ F Choice Not Available'
+  [   1x] '1217 15940 3115404063 256000213 AHENJITA SARKAR F Choice Not Available'
+  [   1x] '1290 16871 3111207370 256022214 VISHAKHA VILAS BOBADE F OBC Choice Not Available'
+  [   1x] '1327 17404 3118214310 256033576 YADAV VISHNUPRIYA F Choice Not Available'
+  [   1x] '1330 17431 3115302131 256000285 AYUSH DHANESH TRIPATHI M Choice Not Available'
+  [   1x] '1343 17620 3110106012 256020172 ANKIT VIRENDRA YADAV M Choice Not Available'
+  [   1x] '1356 17757 3110412111 256002225 ANUSHKA PANTH F Choice Not Available'
+  [   1x] '1386 18136 3110117129 256045450 CHAURASIYA VISHNU VIDYASAGAR M Choice Not Available'
+  [   1x] '1474 19475 3110213112 256036346 CHAKKATTIL ASHWIKA PRAJIT F Choice Not Available'
+  [   1x] '1558 20577 3111212345 256004267 MANNAT SINGH F Choice Not Available'
+  [   1x] '1571 20725 3118208497 256017664 IRSHIKA NILESH ANGRE F Choice Not Available'
+  [   1x] '1581 20822 3110111065 256019893 YASHIKA YOGENDRA SINGH F Choice Not Available'
+  [   1x] '1638 21382 3129107410 256057934 TIWARI PRAVIN AJIT M Choice Not Available'
+  [   1x] '1657 21678 3118111177 256017419 TANISHKA SURESH KADAM F Choice Not Available'
+  [   1x] '1725 22663 3110316111 256010508 MAHEAK MAHAVIR BAMBOLI F Choice Not Available'
+
+======================================================================
+CHOICE NOT AVAILABLE
+======================================================================
+  Total occurrences: 27557
+  Unique page numbers: [4, 9, 10, 12, 13, 17, 19, 20, 21, 22, 23, 24, 26, 27, 28, 29, 30, 31, 32, 33]
+
+  Unique raw lines:
+  [   1x] '113 1620 3112211157 256015984 RISHIRAJSINGH BISEN M Choice Not Available'
+  [   1x] '139 1863 3114106180 256001582 ATHARVA SHETTIGAR M Choice Not Available'
+  [   1x] '293 3777 3115404158 256011619 ISHAN AUTI M Choice Not Available'
+  [   1x] '341 4357 3129105052 256015737 MAURYA RITIK ARVIND M Choice Not Available'
+  [   1x] '346 4424 3114101018 256044118 NIPUN DAN M Choice Not Available'
+  [   1x] '392 5015 3103102508 256034485 AADHYA SANJEEV KUMAR PRASAD F Choice Not Available'
+  [   1x] '400 5147 3111115007 256019519 DIPTI SINGH F Choice Not Available'
+  [   1x] '414 5291 3110312047 256031033 SABIHA SHARFUDDIN F Choice Not Available'
+  [   1x] '443 5680 3110211019 256014644 SHAIKH SHAMS AALAM MOHD ALEEM M Choice Not Available'
+  [   1x] '583 7397 3129110158 256031466 PATEL NITESH ASLARAM M Choice Not Available'
+  [   1x] '639 8163 3110317078 256018117 SIDDHESH GORAKHNATH RAJURE M Choice Not Available'
+  [   1x] '647 8226 3110210223 256028341 RITIK RAJESH RAVARIYA M Choice Not Available'
+  [   1x] '667 8497 3126106213 256008641 TINA KAWARE F Choice Not Available'
+  [   1x] '673 8546 3110402188 256006549 ARYA GIRISH YADAV F Choice Not Available'
+  [   1x] '677 8621 3110409077 256035903 VARSHA OMPRAKASH VISHNOI F Choice Not Available'
+  [   1x] '719 9202 3110307110 256037467 DAKSH DOSHI M Choice Not Available'
+  [   1x] '744 9534 3110103047 256011965 PUSHKAR RANJAN M Choice Not Available'
+  [   1x] '802 10309 3111101138 256011448 SAMRUDDHI JAIN F Choice Not Available'
+  [   1x] '815 10454 3115206022 256000272 NAVYA PANKAJ SONI F Choice Not Available'
+  [   1x] '881 11414 3110305029 256000661 ABDEALI SHABBIR UNWALA M Choice Not Available'
+  [   1x] '892 11589 3110114083 256000297 TIRTHA SATHEESAN NAIR F Choice Not Available'
+  [   1x] '907 11764 3114102106 256013140 SOUVIK RAKSHIT M Choice Not Available'
+  [   1x] '934 12074 3115306401 256016206 AASTHA BHAT F Choice Not Available'
+  [   1x] '954 12309 3110311414 256050616 AARYAN BALASAHEB SHINDE M Choice Not Available'
+  [   1x] '986 12684 3110408466 256017842 IBRAHEEM M Choice Not Available'
+  [   1x] '988 12705 3118108016 256038075 SHAKYA SHAILENDRA KUMAR F Choice Not Available'
+  [   1x] '1008 12994 3113110063 256027764 DAKSH CHAUHAN M Choice Not Available'
+  [   1x] '1010 13012 3110206271 256012322 DIPALI PRAMOD REDIJ F Choice Not Available'
+  [   1x] '1012 13033 3129108177 256017226 RAHUL THANARAM SIRVI M Choice Not Available'
+  [   1x] '1050 13612 3111103408 256015825 BHUMIKA RAJESH RANJAN F Choice Not Available'
+
+======================================================================
+COLLEGES (94 found)
+======================================================================
+  1101: 'GMC MUMBAI'  (1 name variants)
+  1102: 'Tilak MC MUMBAI'  (1 name variants)
+  1103: 'GSMC MUMBAI'  (1 name variants)
+  1104: 'Nair MC MUMBAI'  (1 name variants)
+  1105: 'K J Somaiya MC MUMBAI'  (1 name variants)
+  1108: 'Terna MC NERUL NAVI MUMBAI'  (1 name variants)
+  1109: 'RGMC KALVA THANE'  (1 name variants)
+  1110: 'BJMC PUNE'  (1 name variants)
+  1112: 'MIMER MC TALEGAON PUNE'  (1 name variants)
+  1114: 'V M MC SOLAPUR'  (1 name variants)
+  1115: 'GMC MIRAJ'  (1 name variants)
+  1118: 'V PAWAR MC NASIK'  (1 name variants)
+  1119: 'B HIRE MC DHULE'  (1 name variants)
+  1120: 'ACPM MC DHULE'  (1 name variants)
+  1132: 'GMC KOLHAPUR'  (1 name variants)
+  1135: "VVPF'S MED. COL"  (1 name variants)
+  1136: 'SKN MED.COL PUNE'  (1 name variants)
+  1137: 'ASHWINI MED.COL SOLAPUR'  (1 name variants)
+  1138: 'DR U. PATIL MC JALGAON'  (1 name variants)
+  1139: 'WALAWALKAR MC RATNAGIRI'  (1 name variants)
+  1140: 'HBT & COOPER MC JUHU, MUMBAI'  (1 name variants)
+  1143: 'PIMS ISLAMPUR ISLAMPUR,SANGLI'  (1 name variants)
+  1144: 'SMBT MC NASHIK NANDIHILLS'  (1 name variants)
+  1147: 'VEDANTA MC PALGHAR'  (1 name variants)
+  1149: 'GMC JALGAON'  (1 name variants)
+  1150: 'GMC BARAMATI'  (1 name variants)
+  1151: 'GMC NANDURBAR'  (1 name variants)
+  1152: 'SSPM MC KUDAL SINDHUDURG'  (1 name variants)
+  1153: 'GMC ALIBAUG'  (1 name variants)
+  1154: 'GMC SINDHUDURG'  (1 name variants)
+  1155: 'GMC SATARA'  (1 name variants)
+  1156: 'DNY TASGAONKAR MC KARJAT'  (1 name variants)
+  1157: 'AB VAJPAYEE MC PUNE'  (1 name variants)
+  1159: 'GMC RATNAGIRI'  (1 name variants)
+  1163: 'GMC & GT HOSP MUMBAI'  (1 name variants)
+  1164: 'GMC NASHIK'  (1 name variants)
+  1166: 'GMC AMBERNATH'  (1 name variants)
+  1221: 'GMC NAGPUR'  (1 name variants)
+  1222: 'IGMC NAGPUR'  (1 name variants)
+  1223: 'NKP SALVE MC NAGPUR'  (1 name variants)
+  1225: 'PDMC AMRAVATI'  (1 name variants)
+  1226: 'VNMC YEOTMAL'  (1 name variants)
+  1234: 'GMC AKOLA'  (1 name variants)
+  1241: 'MS KANNAMWAR GMC CHANDRAPUR'  (1 name variants)
+  1242: 'GGMC GONDIA'  (1 name variants)
+  1248: 'MGIMS MC SEVAGRAM,WARDHA'  (1 name variants)
+  1261: 'DR R GODE MC AMARAVATI'  (1 name variants)
+  1267: 'GMC AMARAVATI'  (1 name variants)
+  1268: 'GMC BHANDARA'  (1 name variants)
+  1269: 'GMC BULDHANA'  (1 name variants)
+  1270: 'GMC WASHIM'  (1 name variants)
+  1327: 'GMC CH. SAMBHAJINAGAR'  (1 name variants)
+  1328: 'DR.S.C.GMC NANDED'  (1 name variants)
+  1329: 'SRTR MC AMBAJOGAI'  (1 name variants)
+  1330: 'MIMSR MC LATUR'  (1 name variants)
+  1333: 'V.D. GMC LATUR'  (1 name variants)
+  1345: 'IIMSR JALNA'  (1 name variants)
+  1358: 'GMC DHARASHIV'  (1 name variants)
+  1360: 'GMC PARBHANI'  (1 name variants)
+  1362: 'PMC PARBHANI'  (1 name variants)
+  1365: 'RAMCHANDRA INST MC'  (1 name variants)
+  1371: 'GMC HINGOLI'  (1 name variants)
+  1372: 'GMC JALNA'  (1 name variants)
+  1373: 'GMC GADCHIROLI'  (1 name variants)
+  2101: 'GDC MUMBAI'  (1 name variants)
+  2102: 'Nair DC MUMBAI'  (1 name variants)
+  2104: 'V Patil DC SANGLI'  (1 name variants)
+  2105: 'MGVM DC NASIK'  (1 name variants)
+  2115: 'YMT DC NEW MUMBAI'  (1 name variants)
+  2116: 'D Y PATIL DC LOHGAON, PUNE'  (1 name variants)
+  2117: 'SMBT DC SANGAMNER'  (1 name variants)
+  2118: 'PDU DC SOLAPUR'  (1 name variants)
+  2119: 'MAR DC PUNE'  (1 name variants)
+  2120: 'KORE DC KOLHAPUR'  (1 name variants)
+  2121: 'ACPM DC DHULE'  (1 name variants)
+  2122: 'TERNA DC NEW MUMBAI'  (1 name variants)
+  2123: 'MGM DC NEW MUMBAI'  (1 name variants)
+  2124: 'SINHAGAD DC PUNE'  (1 name variants)
+  2127: 'YOGITA DC KHED, RATNAGIRI'  (1 name variants)
+  2134: "YCM DC AHILYANAGAR(A'NAGAR)"  (1 name variants)
+  2135: 'SMBT DC NASIK'  (1 name variants)
+  2136: 'GDC JALGAON'  (1 name variants)
+  2207: 'GDC NAGPUR'  (1 name variants)
+  2211: 'VYWS DC AMRAVATI'  (1 name variants)
+  2212: 'RANJEET DESHMUKH DC HINGANA NAGPUR'  (1 name variants)
+  2229: 'KAMBE DC AKOLA'  (1 name variants)
+  2230: 'SDKS DC NAGPUR'  (1 name variants)
+  2313: 'GDC CH. SAMBHAJINAGAR'  (1 name variants)
+  2314: 'CSMSS DC CH. SAMBHAJINAGAR'  (1 name variants)
+  2325: 'MIDSR DC LATUR'  (1 name variants)
+  2326: 'SD DC PARBHANI'  (1 name variants)
+  2331: 'ADITYA DC BEED'  (1 name variants)
+  2332: 'HEDGEWAR DC HINGOLI'  (1 name variants)
+  2333: 'NANDED RURAL DC'  (1 name variants)

@@ -174,7 +174,7 @@ def generate_excel(records: list) -> io.BytesIO:
     # Column widths
     ws.column_dimensions["A"].width = 10
     ws.column_dimensions["B"].width = 45
-    for ci in range(3, num_cols + 1):
+    for ci in range(3, num_cols + 1):  # columns 3..num_cols (= 2 fixed + N categories)
         ws.column_dimensions[get_column_letter(ci)].width = 15
 
     ws.freeze_panes = "C4"
@@ -309,6 +309,12 @@ def get_extraction(doc_id):
     doc["_id"] = str(doc["_id"])
     if "upload_time" in doc:
         doc["upload_time"] = doc["upload_time"].isoformat()
+        
+    all_cats = set()
+    for r in doc.get("records", []):
+        all_cats.update(r.get("category_cutoffs", {}).keys())
+    doc["categories"] = sort_categories(all_cats)
+    
     return _json(doc)
 
 

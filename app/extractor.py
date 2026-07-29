@@ -6,7 +6,9 @@ State Common Eligibility List (SCEL) PDF published by DMER/DGHS.
 
 Design principles
 -----------------
-* Single-pass, page-by-page text extraction via pypdfium2.
+* Two-pass, page-by-page text extraction via pypdfium2.
+  Pass 1: collect lines → join wrapped college-name continuation lines.
+  Pass 2: parse joined lines with _FLEX_RE.
 * All normalisation happens in _extract_quota(); the regex pipeline is
   strictly ordered so no step can silently destroy another step's work.
 * QUOTA_MAP keys are stored in their canonical, space-normalised form
@@ -43,6 +45,7 @@ QUOTA_MAP: dict[str, str] = {
     "OBC (W)":         "OBC (W)",
     "OBCW":            "OBC (W)",
     "OBC":             "OBC",
+    "SOBC":            "OBC",         # "State OBC" — alias used in some PDF rows
 
     # ── SC / ST ────────────────────────────────────────────────────────────────
     "SC (W)":          "SC (W)",
@@ -190,6 +193,44 @@ QUOTA_MAP: dict[str, str] = {
     "PH (W)":          "PH (W)",
     "PH":              "PH",
     "PWD-OPEN":        "PWD-OPEN",
+    "PWD-OPEN PH":     "PWD-OPEN",
+    "PWD-OBC":         "PWD-OBC",
+    "PWD-OBC PH":      "PWD-OBC",
+    "PWD-SC":          "PWD-SC",
+    "PWD-SC PH":       "PWD-SC",
+    "PWD-ST":          "PWD-ST",
+    "PWD-ST PH":       "PWD-ST",
+    "PWD-VJA":         "PWD-VJA",
+    "PWD-VJA PH":      "PWD-VJA",
+    "PWD-NTB":         "PWD-NTB",
+    "PWD-NTB PH":      "PWD-NTB",
+    "PWD-NTC":         "PWD-NTC",
+    "PWD-NTC PH":      "PWD-NTC",
+    "PWD-NTD":         "PWD-NTD",
+    "PWD-NTD PH":      "PWD-NTD",
+    "PWD-SEBC":        "PWD-SEBC",
+    "PWD-SEBC PH":     "PWD-SEBC",
+    "PWD-EWS":         "PWD-EWS",
+    "PWD-EWS PH":      "PWD-EWS",
+    "PWD-SBC":         "PWD-SBC",
+    "PWD-SBC PH":      "PWD-SBC",
+
+    # ── PEM (Physically Enabled Merit) variants — EMR/EMD suffix ───────────────
+    # Pattern in PDF: "<CASTE> PWD PEM <CASTE> PH (EMR)"
+    # After (EMR) and (EMD) stripping → "<CASTE> PWD PEM <CASTE> PH"
+    # We normalise PEM <CASTE> PH → PWD-<CASTE> via _PEM_RE below.
+    # Direct entries for safety:
+    "PEM OPEN PH":     "PWD-OPEN",
+    "PEM OBC PH":      "PWD-OBC",
+    "PEM SC PH":       "PWD-SC",
+    "PEM ST PH":       "PWD-ST",
+    "PEM NTC PH":      "PWD-NTC",
+    "PEM NTB PH":      "PWD-NTB",
+    "PEM NTD PH":      "PWD-NTD",
+    "PEM VJA PH":      "PWD-VJA",
+    "PEM SEBC PH":     "PWD-SEBC",
+    "PEM EWS PH":      "PWD-EWS",
+    "PEM SBC PH":      "PWD-SBC",
 
     # ── NRI ────────────────────────────────────────────────────────────────────
     "NRI":             "NRI",
@@ -200,21 +241,26 @@ QUOTA_MAP: dict[str, str] = {
     "MKB":             "MKB",
 
     # ── Orphan ─────────────────────────────────────────────────────────────────
-    "ORPHAN-A OBC":    "ORPHAN-A OBC",
-    "ORPHAN-C OBC":    "ORPHAN-C OBC",
-    "ORPHAN-C SC":     "ORPHAN-C SC",
-    "ORPHAN-C ST":     "ORPHAN-C ST",
-    "ORPHAN-C SEBC":   "ORPHAN-C SEBC",
-    "ORPHAN-A NT2":    "ORPHAN-A NT-C",
-    "ORPHAN-C NT1":    "ORPHAN-C NT-B",
-    "ORPHAN-C NT2":    "ORPHAN-C NT-C",
-    "ORPHAN-C VJ":     "ORPHAN-C VJ-A",
-    "ORPHAN-A":        "ORPHAN-A",
-    "ORPHAN-C":        "ORPHAN-C",
-    "ORPHANC":         "ORPHAN-C",
+    # All sub-types (ORPHAN-A, ORPHAN-C, with caste suffixes) collapse to the
+    # single canonical value "ORPHAN" so they appear as one column in the output.
+    # The worst (highest) AIR across all orphan sub-types is stored per college.
+    "ORPHAN-A OBC":    "ORPHAN",
+    "ORPHAN-C OBC":    "ORPHAN",
+    "ORPHAN-C SC":     "ORPHAN",
+    "ORPHAN-C ST":     "ORPHAN",
+    "ORPHAN-C SEBC":   "ORPHAN",
+    "ORPHAN-A NT2":    "ORPHAN",
+    "ORPHAN-C NT1":    "ORPHAN",
+    "ORPHAN-C NT2":    "ORPHAN",
+    "ORPHAN-C VJ":     "ORPHAN",
+    "ORPHAN-A":        "ORPHAN",
+    "ORPHAN-C":        "ORPHAN",
+    "ORPHANC":         "ORPHAN",
+    "ORPHAN":          "ORPHAN",
 
     # ── I.Q. (Institutional Quota) ─────────────────────────────────────────────
-    "I.Q. MINO":       "I.Q. MINO",
+    # MINO sub-type collapses into the single "I.Q." column.
+    "I.Q. MINO":       "I.Q.",
     "I.Q.":            "I.Q.",
 
     # ── NTA W alias (space-separated variant of NTA(W) / VJ-A(W)) ─────────────
@@ -239,8 +285,11 @@ _SKIP_PREFIXES = (
     "PROVISIONAL", "Note:", "Printed On", "Sr. AIR",
     "No. Roll", "Last Date", "Admitting", "This Provisional",
     "Candidate should", "This seat", "be confirmed", "stipulated",
-    "Legends", "I.Q.",
-    "Choice Not Available",
+    "Legends",
+    # "Choice Not Available" and "I.Q." removed from skip list —
+    # they appear mid-line in data rows (not as line prefixes) so
+    # the prefix-check would never fire on real data rows anyway,
+    # but keeping them would mask bugs if the PDF changes format.
 )
 
 # ==============================================================================
@@ -260,8 +309,18 @@ _FLEX_RE = re.compile(
     r"(\d{4})\s*:\s*(.+)$" # (3) College code  (4) College name
 )
 
+# "Choice Not Available" row — no college code, candidate made no choices
+# Groups: (1) AIR  — we use this to detect and skip these rows early
+_CNA_RE = re.compile(
+    r"^\s*\d+\s+\d+\s+\d+\s+\d+\s+.+?\s+[MF]\s+.*?Choice\s+Not\s+Available\s*$",
+    re.IGNORECASE,
+)
+
 # Strip trailing (EMD) marker — must run FIRST before any other cleaning
 _EMD_RE = re.compile(r"\s*\(EMD\)\s*$", re.IGNORECASE)
+
+# Strip trailing (EMR) marker (Early Merit Result) — same idea as (EMD)
+_EMR_RE = re.compile(r"\s*\(EMR\)\s*$", re.IGNORECASE)
 
 # Strip parenthesised noise EXCEPT (W) — e.g. (PH), (NRI), (OBC) qualifiers
 # that appear as suffixes and are NOT the women's quota marker.
@@ -283,6 +342,45 @@ _IQ_RE = re.compile(r"^.*?\bI\.Q\.\b(\s*MINO)?\s*$", re.IGNORECASE)
 # Collapse multiple internal spaces to one
 _MULTI_SPACE_RE = re.compile(r" {2,}")
 
+# PEM <CASTE> PH pattern: rewrite to PWD-<CASTE>
+# Matches things like "PWD PEM NTC PH", "OBC PWD PEM OBC PH" etc.
+# Capture group 1 = caste token (OPEN/OBC/SC/ST/NTC/NTB/NTD/VJA/SEBC/EWS/SBC)
+_PEM_PH_RE = re.compile(
+    r"\bPEM\s+(OPEN|OBC|SC|ST|NTC|NTB|NTD|VJA|VJ-A|SEBC|SBC|EWS)\s+PH\b",
+    re.IGNORECASE,
+)
+
+# Map from PEM caste token → canonical PWD-xxx key
+_PEM_CASTE_MAP: dict[str, str] = {
+    "OPEN":  "PWD-OPEN",
+    "OBC":   "PWD-OBC",
+    "SC":    "PWD-SC",
+    "ST":    "PWD-ST",
+    "NTC":   "PWD-NTC",
+    "NTB":   "PWD-NTB",
+    "NTD":   "PWD-NTD",
+    "VJA":   "PWD-VJA",
+    "VJ-A":  "PWD-VJA",
+    "SEBC":  "PWD-SEBC",
+    "SBC":   "PWD-SBC",
+    "EWS":   "PWD-EWS",
+}
+
+# Continuation-line patterns: a line that is ONLY a city/suffix appended to a
+# truncated college name from the previous line.  These two are the only known
+# cases in the current PDF; add more if new PDFs show similar wrapping.
+_NAME_CONTINUATION_RE = re.compile(
+    r"^("
+    r"AHILYANAGAR\(A'NAGAR\)"    # YCM DC / VVPF suffix
+    r"|CH\.SAMBHAJINAGAR"        # RAMCHANDRA INST MC / GMC suffix
+    r")\s*$",
+    re.IGNORECASE,
+)
+
+# Regex to detect lines that start with a new data-row (so we don't accidentally
+# merge them as name continuations).
+_STARTS_WITH_ROW_RE = re.compile(r"^\s*\d+\s+\d+\s+\d+\s+\d+\s+\S")
+
 # ==============================================================================
 # Core normalisation pipeline
 # ==============================================================================
@@ -294,8 +392,9 @@ def _extract_quota(raw_block: str) -> Optional[str]:
 
     Pipeline (strict order):
       1. Strip leading/trailing whitespace.
-      2. Strip trailing (EMD) marker.
+      2. Strip trailing (EMD) / (EMR) markers.
       3. Strip parenthesised junk (but NOT "(W)").
+      3b. PEM-PH fast path: rewrite "PEM <CASTE> PH" → "PWD-<CASTE>".
       4. Handle I.Q. lines explicitly.
       5. Strip standalone "HA" prefix (home-address indicator).
       6. Insert space before "(W)" when missing: TOKEN(W) → TOKEN (W).
@@ -308,8 +407,9 @@ def _extract_quota(raw_block: str) -> Optional[str]:
     if not s:
         return None
 
-    # Step 2 – strip (EMD)
+    # Step 2 – strip (EMD) and (EMR) trailing markers
     s = _EMD_RE.sub("", s).strip()
+    s = _EMR_RE.sub("", s).strip()
     if not s:
         return None
 
@@ -317,6 +417,13 @@ def _extract_quota(raw_block: str) -> Optional[str]:
     s = _JUNK_PAREN_RE.sub("", s).strip()
     if not s:
         return None
+
+    # Step 3b – PEM <CASTE> PH → PWD-<CASTE>
+    # Handles blocks like: "NTC PWD PEM NTC PH", "OBC PWD PEM OBC PH" etc.
+    m_pem = _PEM_PH_RE.search(s)
+    if m_pem:
+        caste = m_pem.group(1).upper()
+        return _PEM_CASTE_MAP.get(caste, "PWD-" + caste)
 
     # Step 4 – I.Q. fast path
     m_iq = _IQ_RE.match(s)
@@ -408,8 +515,6 @@ def sort_categories(cats) -> list[str]:
     """
     def _key(c: str):
         c_up = c.upper()
-        # Determine base (strip leading H for HA-categories, but keep HA- prefix)
-        base = c_up
         weight = 99
         for prefix, w in _SORT_ORDER.items():
             if c_up.startswith(prefix):
@@ -446,6 +551,12 @@ def extract_cutoffs(pdf_path: str) -> list[dict]:
 
     The cutoff stored per (college, category) is the **highest (worst) AIR**
     seen for that combination, i.e. the closing/last rank.
+
+    Two-pass approach per page:
+      Pass 1 – collect raw lines and join "name continuation" lines (e.g.
+               "AHILYANAGAR(A'NAGAR)") that appear on the next line after a
+               truncated college name in the data row.
+      Pass 2 – parse each (possibly joined) line with _FLEX_RE.
     """
     # college_code → {quota → max_air}
     data: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
@@ -460,24 +571,49 @@ def extract_cutoffs(pdf_path: str) -> list[dict]:
     doc = pdfium.PdfDocument(pdf_bytes)
     try:
         for pg_idx in range(len(doc)):
-            page = doc[pg_idx]
+            page     = doc[pg_idx]
             textpage = page.get_textpage()
-            text = textpage.get_text_range()
+            text     = textpage.get_text_range()
             textpage.close()
             page.close()
 
             if not text:
                 continue
 
-            for raw_line in text.split("\n"):
+            raw_lines = text.split("\n")
+
+            # ── Pass 1: join name-continuation lines ──────────────────────────
+            # When a college name is too long the PDF wraps it to the next line.
+            # We detect known continuation patterns and concatenate them to the
+            # preceding data line.
+            joined: list[str] = []
+            for raw_line in raw_lines:
+                stripped = raw_line.strip()
+                if _NAME_CONTINUATION_RE.match(stripped) and joined:
+                    # Append continuation to the previous line
+                    joined[-1] = joined[-1].rstrip() + " " + stripped
+                else:
+                    joined.append(raw_line)
+
+            # ── Pass 2: parse joined lines ────────────────────────────────────
+            for raw_line in joined:
                 line = raw_line.strip()
 
-                # Fast skip: blank / header / legend lines
+                # Fast skip: blank lines
                 if not line:
                     continue
+
+                # Skip header / footer / legend boilerplate
                 if any(line.startswith(p) for p in _SKIP_PREFIXES):
                     continue
+
+                # Skip separator lines
                 if "------" in line or "======" in line:
+                    continue
+
+                # Skip "Choice Not Available" rows — these candidates made no
+                # college choices so there is no college code to record.
+                if _CNA_RE.match(line):
                     continue
 
                 m = _FLEX_RE.match(line)
@@ -487,13 +623,17 @@ def extract_cutoffs(pdf_path: str) -> list[dict]:
                 air           = int(m.group(1))
                 cat_quota_raw = m.group(2).strip()
                 col_code      = m.group(3)
-                
-                # If PDF text merged with the next row, cut it off before the next Sr. No (which is followed by AIR and Roll No)
-                raw_name = m.group(4).strip()
-                col_name = re.split(r'\s+\d{1,6}\s+\d{1,7}\s+\d{8,}', raw_name)[0].strip()
 
-                # Prefer the longest / most complete college name seen, but ignore absurdly long merged glitches
-                if col_code not in names or (len(col_name) > len(names[col_code]) and len(col_name) < 100):
+                # If PDF text merged with the next row, cut it off at the
+                # next Sr. No. pattern  (Sr\d+ AIR Roll AppNo)
+                raw_name = m.group(4).strip()
+                col_name = re.split(r"\s+\d{1,6}\s+\d{1,7}\s+\d{8,}", raw_name)[0].strip()
+
+                # Prefer longest / most complete college name seen, but cap at
+                # 120 chars to avoid merging glitches
+                if col_code not in names or (
+                    len(col_name) > len(names[col_code]) and len(col_name) < 120
+                ):
                     names[col_code] = col_name
 
                 quota = _extract_quota(cat_quota_raw)
@@ -545,3 +685,8 @@ if __name__ == "__main__":
 
     print(f"Done in {dt:.2f}s.  Colleges: {len(recs)},  Categories: {len(cats)}")
     print(sort_categories(cats))
+
+    # Show college name check
+    print("\nCollege names:")
+    for r in recs:
+        print(f"  {r['college_code']}: {r['college_name']!r}")
