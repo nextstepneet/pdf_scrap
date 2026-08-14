@@ -1,1 +1,0 @@
-﻿import openpyxl; wb = openpyxl.load_workbook(r'D:\data\MBBS_BDS_R1_Cutoffs.xlsx'); ws = wb['All Cutoffs']; print('First 5 rows of All Cutoffs sheet:'); [print(f'Row {i}: {[c.value for c in ws[i]][:5]}') for i in range(1, 6) if any(c.value for c in ws[i])]

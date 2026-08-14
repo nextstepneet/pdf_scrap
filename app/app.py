@@ -18,6 +18,7 @@ from openpyxl.utils import get_column_letter
 
 # Fast extractor (pypdfium2)
 from extractor import extract_cutoffs, sort_categories
+from predictor import predict_mark, predict_state_rank
 
 # ─────────────────────────────────────────────────
 # App Setup
@@ -122,7 +123,7 @@ def generate_excel(records: list) -> io.BytesIO:
         bottom=Side(style="thin", color="CBD5E1"),
     )
 
-    num_cols = len(categories) + 2
+    num_cols = len(categories) * 3 + 2
 
     # Row 1 – title
     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=num_cols)
@@ -140,22 +141,47 @@ def generate_excel(records: list) -> io.BytesIO:
     sc.alignment = center_a
     ws.row_dimensions[2].height = 22
 
-    # Row 3 – column headers
+    # Row 3 & 4 – column headers
+    ws.merge_cells(start_row=3, start_column=1, end_row=4, end_column=1)
     c1 = ws.cell(row=3, column=1, value="Code")
     c1.font = h_font; c1.fill = h_fill; c1.alignment = center_a; c1.border = thin
+    ws.cell(row=4, column=1).border = thin
     
+    ws.merge_cells(start_row=3, start_column=2, end_row=4, end_column=2)
     c2 = ws.cell(row=3, column=2, value="College Name")
     c2.font = h_font; c2.fill = h_fill; c2.alignment = left_a; c2.border = thin
+    ws.cell(row=4, column=2).border = thin
 
-    ws.row_dimensions[3].height = 30
+    ws.row_dimensions[3].height = 20
+    ws.row_dimensions[4].height = 20
 
-    for ci, cat in enumerate(categories, start=3):
-        cell = ws.cell(row=3, column=ci, value=cat)
-        cell.font = h_font; cell.fill = h_fill
-        cell.alignment = center_a; cell.border = thin
+    for ci, cat in enumerate(categories):
+        col_rank = 3 + (ci * 3)
+        col_srank = col_rank + 1
+        col_mark = col_srank + 1
+        
+        # Row 3: Category
+        ws.merge_cells(start_row=3, start_column=col_rank, end_row=3, end_column=col_mark)
+        cat_cell = ws.cell(row=3, column=col_rank, value=cat)
+        cat_cell.font = h_font; cat_cell.fill = h_fill; cat_cell.alignment = center_a; cat_cell.border = thin
+        ws.cell(row=3, column=col_srank).border = thin
+        ws.cell(row=3, column=col_mark).border = thin
+        
+        # Row 4: Subheaders
+        cell_rank = ws.cell(row=4, column=col_rank, value="AIR")
+        cell_rank.font = h_font; cell_rank.fill = h_fill
+        cell_rank.alignment = center_a; cell_rank.border = thin
 
-    # Rows 4+ – data
-    for ri, college in enumerate(colleges, start=4):
+        cell_srank = ws.cell(row=4, column=col_srank, value="State Rank")
+        cell_srank.font = h_font; cell_srank.fill = h_fill
+        cell_srank.alignment = center_a; cell_srank.border = thin
+        
+        cell_mark = ws.cell(row=4, column=col_mark, value="Mark")
+        cell_mark.font = h_font; cell_mark.fill = h_fill
+        cell_mark.alignment = center_a; cell_mark.border = thin
+
+    # Rows 5+ – data
+    for ri, college in enumerate(colleges, start=5):
         row_fill = even_fill if ri % 2 == 0 else odd_fill
         ws.row_dimensions[ri].height = 18
 
@@ -167,20 +193,38 @@ def generate_excel(records: list) -> io.BytesIO:
         cell_name.font = col_font; cell_name.fill = row_fill
         cell_name.alignment = left_a; cell_name.border = thin
 
-        for ci, cat in enumerate(categories, start=3):
+        for ci, cat in enumerate(categories):
+            col_rank = 3 + (ci * 3)
+            col_srank = col_rank + 1
+            col_mark = col_srank + 1
+            
             val  = college["category_cutoffs"].get(cat)
-            disp = val if val else "—"
-            cell = ws.cell(row=ri, column=ci, value=disp)
-            cell.font = data_font; cell.fill = row_fill
-            cell.alignment = center_a; cell.border = thin
+            srank = college.get("category_state_ranks", {}).get(cat)
+            mark = college.get("category_marks", {}).get(cat)
+            
+            val_disp = val if val else "—"
+            srank_disp = srank if srank else "—"
+            mark_disp = mark if val and mark else "—"
+            
+            cell_r = ws.cell(row=ri, column=col_rank, value=val_disp)
+            cell_r.font = data_font; cell_r.fill = row_fill
+            cell_r.alignment = center_a; cell_r.border = thin
+
+            cell_s = ws.cell(row=ri, column=col_srank, value=srank_disp)
+            cell_s.font = data_font; cell_s.fill = row_fill
+            cell_s.alignment = center_a; cell_s.border = thin
+            
+            cell_m = ws.cell(row=ri, column=col_mark, value=mark_disp)
+            cell_m.font = data_font; cell_m.fill = row_fill
+            cell_m.alignment = center_a; cell_m.border = thin
 
     # Column widths
     ws.column_dimensions["A"].width = 10
     ws.column_dimensions["B"].width = 45
-    for ci in range(3, num_cols + 1):  # columns 3..num_cols (= 2 fixed + N categories)
-        ws.column_dimensions[get_column_letter(ci)].width = 15
+    for ci in range(3, num_cols + 1):  # columns 3..num_cols (= 2 fixed + N categories * 3)
+        ws.column_dimensions[get_column_letter(ci)].width = 11
 
-    ws.freeze_panes = "C4"
+    ws.freeze_panes = "C5"
 
     buf = io.BytesIO()
     wb.save(buf); buf.seek(0)
@@ -256,6 +300,12 @@ def upload_pdf():
             all_cats: set = set()
             for r in records:
                 all_cats.update(r["category_cutoffs"].keys())
+                
+            for r in records:
+                r["category_marks"] = {}
+                for cat, rank in r["category_cutoffs"].items():
+                    if rank:
+                        r["category_marks"][cat] = predict_mark(rank)
 
             tasks[t_id]["result"] = {
                 "success":          True,
@@ -345,6 +395,10 @@ def get_extraction(doc_id):
     all_cats = set()
     for r in doc.get("records", []):
         all_cats.update(r.get("category_cutoffs", {}).keys())
+        r["category_marks"] = {}
+        for cat, rank in r.get("category_cutoffs", {}).items():
+            if rank:
+                r["category_marks"][cat] = predict_mark(rank)
     doc["categories"] = sort_categories(all_cats)
     
     return _json(doc)
@@ -359,6 +413,12 @@ def download_excel(doc_id):
     records = doc.get("records", [])
     if not records:
         return _json({"error": "No records"}, 404)
+        
+    for r in records:
+        r["category_marks"] = {}
+        for cat, rank in r.get("category_cutoffs", {}).items():
+            if rank:
+                r["category_marks"][cat] = predict_mark(rank)
 
     buf  = generate_excel(records)
     safe = re.sub(r"[^\w\-.]", "_", doc.get("filename", "cutoff"))

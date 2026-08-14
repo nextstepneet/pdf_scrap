@@ -300,14 +300,14 @@ _SKIP_PREFIXES = (
 # Main data-row pattern (flexible whitespace, handles multi-word college names)
 # Groups: (1) AIR  (2) cat+quota block  (3) college code  (4) college name
 _FLEX_RE = re.compile(
-    r"^\s*\d+\s+"          # Sr. No.  (discarded)
-    r"(\d+)\s+"            # (1) AIR rank
+    r"^\s*(\d+)\s+"        # (1) Sr. No.  (State Rank)
+    r"(\d+)\s+"            # (2) AIR rank
     r"\d+\s+"              # Roll No. (discarded)
     r"\d+\s+"              # App No.  (discarded)
     r".+?\s+"              # Candidate name (discarded, non-greedy)
     r"[MF]\s+"             # Gender   (discarded)
-    r"(.+?)\s+"            # (2) Category/Quota block  ← key capture
-    r"(\d{4})\s*:\s*(.+)$" # (3) College code  (4) College name
+    r"(.+?)\s+"            # (3) Category/Quota block  ← key capture
+    r"(\d{4})\s*:\s*(.+)$" # (4) College code  (5) College name
 )
 
 # "Choice Not Available" row — no college code, candidate made no choices
@@ -561,6 +561,8 @@ def extract_cutoffs(pdf_path: str, progress_cb=None) -> list[dict]:
     """
     # college_code → {quota → max_air}
     data: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    # college_code → {quota → state_rank_for_max_air}
+    data_sr: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     # college_code → college_name
     names: dict[str, str] = {}
     # quotas that didn't resolve to a known canonical value
@@ -625,13 +627,14 @@ def extract_cutoffs(pdf_path: str, progress_cb=None) -> list[dict]:
                     if not m:
                         continue
 
-                    air           = int(m.group(1))
-                    cat_quota_raw = m.group(2).strip()
-                    col_code      = m.group(3)
+                    sr_no         = int(m.group(1))
+                    air           = int(m.group(2))
+                    cat_quota_raw = m.group(3).strip()
+                    col_code      = m.group(4)
 
                     # If PDF text merged with the next row, cut it off at the
                     # next Sr. No. pattern  (Sr\d+ AIR Roll AppNo)
-                    raw_name = m.group(4).strip()
+                    raw_name = m.group(5).strip()
                     col_name = re.split(r"\s+\d{1,6}\s+\d{1,7}\s+\d{8,}", raw_name)[0].strip()
 
                     # Prefer longest / most complete college name seen, but cap at
@@ -648,6 +651,7 @@ def extract_cutoffs(pdf_path: str, progress_cb=None) -> list[dict]:
                     # Closing rank = highest (worst) AIR seen for this cell
                     if air > data[col_code][quota]:
                         data[col_code][quota] = air
+                        data_sr[col_code][quota] = sr_no
 
                     if quota not in _QUOTA_VALUES:
                         unknown_cats.add(f"{quota!r} (raw={cat_quota_raw!r})")
@@ -657,11 +661,12 @@ def extract_cutoffs(pdf_path: str, progress_cb=None) -> list[dict]:
 
     records = [
         {
-            "college_code":     code,
-            "college_name":     names.get(code, code),
-            "category_cutoffs": dict(cat_dict),
+            "college_code":         code,
+            "college_name":         names.get(code, code),
+            "category_cutoffs":     dict(data[code]),
+            "category_state_ranks": dict(data_sr[code]),
         }
-        for code, cat_dict in sorted(data.items())
+        for code in sorted(data.keys())
     ]
 
     if unknown_cats:

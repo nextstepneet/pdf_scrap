@@ -786,9 +786,17 @@
     const tbody = document.getElementById('tableBody');
 
     let hHtml = '<tr>';
-    hHtml += '<th class="col-code">Code</th>';
-    hHtml += '<th class="col-name" style="text-align:left;">College</th>';
-    categories.forEach(c => { hHtml += `<th>${esc(c)}</th>`; });
+    hHtml += '<th rowspan="2" class="col-code" style="vertical-align:bottom; padding-bottom:12px;">Code</th>';
+    hHtml += '<th rowspan="2" class="col-name" style="text-align:left;vertical-align:bottom; padding-bottom:12px;">College</th>';
+    categories.forEach(c => { 
+      hHtml += `<th colspan="3" style="text-align:center; border-bottom:1px solid var(--border2); border-right:1px solid var(--border);">${esc(c)}</th>`;
+    });
+    hHtml += '</tr><tr>';
+    categories.forEach(c => {
+      hHtml += `<th style="font-size:0.72rem;font-weight:normal;color:var(--text3);text-align:center; background:var(--bg3);">AIR</th>`;
+      hHtml += `<th style="font-size:0.72rem;font-weight:normal;color:var(--text3);text-align:center; background:var(--bg3);">State Rank</th>`;
+      hHtml += `<th style="font-size:0.72rem;font-weight:normal;color:var(--text3);text-align:center; background:var(--bg3); border-right:1px solid var(--border);">Mark</th>`;
+    });
     hHtml += '</tr>';
     thead.innerHTML = hHtml;
 
@@ -800,10 +808,16 @@
       categories.forEach(cat => {
         const v = r.category_cutoffs[cat];
         if (v) {
+          const sr = r.category_state_ranks ? r.category_state_ranks[cat] : null;
+          const m = r.category_marks ? r.category_marks[cat] : null;
           const cls = v <= 10000 ? 't1' : v <= 50000 ? 't2' : 't3';
           bHtml += `<td class="rank-val ${cls}" data-rank="${v}">${v.toLocaleString('en-IN')}</td>`;
+          bHtml += `<td class="rank-val" style="color:var(--text2);">${sr || '—'}</td>`;
+          bHtml += `<td class="rank-val" style="color:var(--text2); border-right:1px solid var(--border);">${m || '—'}</td>`;
         } else {
           bHtml += `<td class="rank-val na" data-rank="9999999">—</td>`;
+          bHtml += `<td class="rank-val na">—</td>`;
+          bHtml += `<td class="rank-val na" style="border-right:1px solid var(--border);">—</td>`;
         }
       });
       bHtml += '</tr>';
