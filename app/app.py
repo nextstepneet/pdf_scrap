@@ -268,9 +268,22 @@ def index():
 
 @app.route("/api/version")
 def version():
-    return _json({"version": "v3.0-fixed", "commit": "c0023cd"})
+    return _json({"version": "v4.0-diag", "commit": "c0023cd"})
 
-
+@app.route("/api/diag", methods=["POST"])
+def diag():
+    file = request.files["file"]
+    fpath = os.path.join(UPLOAD_DIR, secure_filename(file.filename))
+    file.save(fpath)
+    import pypdfium2
+    out = []
+    with pypdfium2.PdfDocument(fpath) as pdf:
+        for i in range(185, min(195, len(pdf))):
+            text = pdf[i].get_textpage().get_text_range()
+            for line in text.split('\n'):
+                if '1362' in line or '1360' in line:
+                    out.append(f"Page {i}: " + repr(line))
+    return _json({"lines": out})
 
 tasks = {}
 
