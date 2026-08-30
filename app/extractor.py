@@ -604,7 +604,7 @@ def extract_cutoffs(pdf_path: str, progress_cb=None) -> list[dict]:
                 if not text:
                     continue
 
-                raw_lines = text.split("\n")
+                raw_lines = text.replace('  ', '\n').split("\n")
 
                 # ── Pass 1: join name-continuation lines ──────────────────────────
                 joined: list[str] = []
