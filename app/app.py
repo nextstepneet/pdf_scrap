@@ -268,7 +268,7 @@ def index():
 
 @app.route("/api/version")
 def version():
-    return _json({"version": "v9.0-diag", "commit": "c0023cd"})
+    return _json({"version": "v10.0-diag", "commit": "c0023cd"})
 
 @app.route("/api/diag", methods=["POST"])
 def diag():
@@ -278,12 +278,13 @@ def diag():
         file.save(fpath)
         import pypdfium2
         out = []
-        with pypdfium2.PdfDocument(fpath) as pdf:
-            for i in range(185, min(195, len(pdf))):
-                text = pdf[i].get_textpage().get_text_range()
-                for line in text.split('\n'):
-                    if '1362' in line or '1360' in line:
-                        out.append(f"Page {i}: " + repr(line))
+        pdf = pypdfium2.PdfDocument(fpath)
+        for i in range(185, min(195, len(pdf))):
+            text = pdf[i].get_textpage().get_text_range()
+            for line in text.split('\n'):
+                if '1362' in line or '1360' in line:
+                    out.append(f"Page {i}: " + repr(line))
+        pdf.close()
         return _json({"lines": out})
     except Exception as e:
         import traceback
