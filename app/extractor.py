@@ -319,7 +319,7 @@ _FLEX_RE = re.compile(
     r"(\d+)\s+"            # (2) AIR rank
     r"\d+\s+"              # Roll No. (discarded)
     r"\d+\s+"              # App No.  (discarded)
-    r"(.+?)\s+"            # (3) Candidate name + Gender + Category/Quota block
+    r"(.+?)\s*"            # (3) Candidate name + Gender + Category/Quota block (optional space)
     r"(\d{4})\s*:\s*(.+)$" # (4) College code  (5) College name
 )
 
