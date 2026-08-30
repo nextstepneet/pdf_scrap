@@ -268,7 +268,7 @@ def index():
 
 @app.route("/api/version")
 def version():
-    return _json({"version": "v2.0-fixed", "commit": "62afac8"})
+    return _json({"version": "v3.0-fixed", "commit": "c0023cd"})
 
 
 
