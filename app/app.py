@@ -268,13 +268,13 @@ def index():
 
 @app.route("/api/version")
 def version():
-    return _json({"version": "v8.0-diag", "commit": "c0023cd"})
+    return _json({"version": "v9.0-diag", "commit": "c0023cd"})
 
 @app.route("/api/diag", methods=["POST"])
 def diag():
     try:
         file = request.files["file"]
-        fpath = os.path.join(UPLOAD_FOLDER, secure_filename(file.filename))
+        fpath = os.path.join(UPLOAD_FOLDER, file.filename)
         file.save(fpath)
         import pypdfium2
         out = []
