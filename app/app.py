@@ -266,6 +266,11 @@ def handle_exception(e):
 def index():
     return render_template("index.html")
 
+@app.route("/api/version")
+def version():
+    return _json({"version": "v2.0-fixed", "commit": "62afac8"})
+
+
 
 tasks = {}
 
