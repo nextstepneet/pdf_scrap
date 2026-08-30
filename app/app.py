@@ -268,7 +268,7 @@ def index():
 
 @app.route("/api/version")
 def version():
-    return _json({"version": "v4.0-diag", "commit": "c0023cd"})
+    return _json({"version": "v5.0-diag", "commit": "c0023cd"})
 
 @app.route("/api/diag", methods=["POST"])
 def diag():

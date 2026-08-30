@@ -645,8 +645,10 @@ def extract_cutoffs(pdf_path: str, progress_cb=None) -> list[dict]:
                     middle   = m.group(3).strip()
                     col_code = m.group(4)
 
-                    # Extract Gender by finding the LAST standalone 'M' or 'F' before category block
-                    gms = list(re.finditer(r"\b([MF])\b", middle))
+                    # Extract Gender by finding the LAST standalone 'M' or 'F' before category block.
+                    # Use a lookahead instead of strict \b on the right to handle Linux pypdfium2 
+                    # text merging (e.g. 'FSEBC' instead of 'F SEBC').
+                    gms = list(re.finditer(r"\b([MF])(?=\s|SEBC|OBC|OPEN|NTC|NTD|NTA|NTB|SC|ST|VJ|EWS|SBC|EM|HA|PWD|DEF|PH|ORPHAN)", middle))
                     if not gms:
                         continue
                     last_gm = gms[-1]
