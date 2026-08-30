@@ -5,3 +5,9 @@ __pycache__/
 .env
 *.pdf
 test_save*.py
+*.txt
+*.xlsx
+Rank_Mark/
+app/uploads/*
+!app/uploads/.gitkeep
+

@@ -145,52 +145,6 @@ QUOTA_MAP: dict[str, str] = {
     "HSBC W":          "HSBC (W)",
     "HSEBC W":         "HSEBC (W)",
 
-    # ── Hilly Area Missing Combinations ─────────────────────────────────────────
-    "HA OPEN":         "HOPEN",
-    "HA OPEN (W)":     "HA-OPEN (W)",
-    "HA OBC":          "HOBC",
-    "HA OBC (W)":      "HOBC (W)",
-    "HA SC":           "HSC",
-    "HA SC (W)":       "HSC (W)",
-    "HA ST":           "HST",
-    "HA ST (W)":       "HST (W)",
-    "HA VJA":          "HVJA",
-    "HA VJA (W)":      "HVJA (W)",
-    "HA NTB":          "HNTB",
-    "HA NTB (W)":      "HNTB (W)",
-    "HA NTC":          "HNTC",
-    "HA NTC (W)":      "HNTC (W)",
-    "HA NTD":          "HNTD",
-    "HA NTD (W)":      "HNTD (W)",
-    "HA SEBC":         "HSEBC",
-    "HA SEBC (W)":     "HSEBC (W)",
-    "HA SBC":          "HSBC",
-    "HA SBC (W)":      "HSBC (W)",
-    "HA EWS":          "HEWS",
-    "HA EWS (W)":      "HEWS (W)",
-
-    "HA EMOPEN":       "HOPEN",
-    "HA EMOPEN (W)":   "HA-OPEN (W)",
-    "HA EMOBC":        "HOBC",
-    "HA EMOBCW":       "HOBC (W)",
-    "HA EMSC":         "HSC",
-    "HA EMSCW":        "HSC (W)",
-    "HA EMST":         "HST",
-    "HA EMSTW":        "HST (W)",
-    "HA EMVJA":        "HVJA",
-    "HA EMVJAW":       "HVJA (W)",
-    "HA EMNTB":        "HNTB",
-    "HA EMNTBW":       "HNTB (W)",
-    "HA EMNTC":        "HNTC",
-    "HA EMNTCW":       "HNTC (W)",
-    "HA EMNTD":        "HNTD",
-    "HA EMNTDW":       "HNTD (W)",
-    "HA EMSEBC":       "HSEBC",
-    "HA EMSEBCW":      "HSEBC (W)",
-    "HA EMSBC":        "HSBC",
-    "HA EMSBCW":       "HSBC (W)",
-    "HA EMEWS":        "HEWS",
-    "HA EMEWSW":       "HEWS (W)",
 
     "HEMOBC":          "HOBC",
     "HEM OBC":         "HOBC",
@@ -358,16 +312,14 @@ _SKIP_PREFIXES = (
 # Compiled regexes
 # ==============================================================================
 
-# Main data-row pattern (flexible whitespace, handles multi-word college names)
-# Groups: (1) AIR  (2) cat+quota block  (3) college code  (4) college name
+# Main data-row pattern (flexible whitespace, captures middle text containing candidate name, gender, and category block)
+# Groups: (1) AIR  (2) Middle text  (3) college code  (4) college name
 _FLEX_RE = re.compile(
     r"^\s*(\d+)\s+"        # (1) Sr. No.  (State Rank)
     r"(\d+)\s+"            # (2) AIR rank
     r"\d+\s+"              # Roll No. (discarded)
     r"\d+\s+"              # App No.  (discarded)
-    r".+?\s+"              # Candidate name (discarded, non-greedy)
-    r"[MF]\s+"             # Gender   (discarded)
-    r"(.+?)\s+"            # (3) Category/Quota block  ← key capture
+    r"(.+?)\s+"            # (3) Candidate name + Gender + Category/Quota block
     r"(\d{4})\s*:\s*(.+)$" # (4) College code  (5) College name
 )
 
@@ -688,10 +640,17 @@ def extract_cutoffs(pdf_path: str, progress_cb=None) -> list[dict]:
                     if not m:
                         continue
 
-                    sr_no         = int(m.group(1))
-                    air           = int(m.group(2))
-                    cat_quota_raw = m.group(3).strip()
-                    col_code      = m.group(4)
+                    sr_no    = int(m.group(1))
+                    air      = int(m.group(2))
+                    middle   = m.group(3).strip()
+                    col_code = m.group(4)
+
+                    # Extract Gender by finding the LAST standalone 'M' or 'F' before category block
+                    gms = list(re.finditer(r"\b([MF])\b", middle))
+                    if not gms:
+                        continue
+                    last_gm = gms[-1]
+                    cat_quota_raw = middle[last_gm.end():].strip()
 
                     # If PDF text merged with the next row, cut it off at the
                     # next Sr. No. pattern  (Sr\d+ AIR Roll AppNo)

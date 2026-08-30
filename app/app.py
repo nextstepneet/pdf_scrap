@@ -303,10 +303,13 @@ def upload_pdf():
                 
             for r in records:
                 r["category_marks"] = {}
+                if "category_state_ranks" not in r or r["category_state_ranks"] is None:
+                    r["category_state_ranks"] = {}
                 for cat, rank in r["category_cutoffs"].items():
                     if rank:
                         r["category_marks"][cat] = predict_mark(rank)
-                        r["category_state_ranks"][cat] = predict_state_rank(rank)
+                        if cat not in r["category_state_ranks"] or not r["category_state_ranks"][cat]:
+                            r["category_state_ranks"][cat] = predict_state_rank(rank)
 
             tasks[t_id]["result"] = {
                 "success":          True,
@@ -397,12 +400,13 @@ def get_extraction(doc_id):
     for r in doc.get("records", []):
         all_cats.update(r.get("category_cutoffs", {}).keys())
         r["category_marks"] = {}
+        if "category_state_ranks" not in r or r["category_state_ranks"] is None:
+            r["category_state_ranks"] = {}
         for cat, rank in r.get("category_cutoffs", {}).items():
             if rank:
                 r["category_marks"][cat] = predict_mark(rank)
-                if "category_state_ranks" not in r:
-                    r["category_state_ranks"] = {}
-                r["category_state_ranks"][cat] = predict_state_rank(rank)
+                if cat not in r["category_state_ranks"] or not r["category_state_ranks"][cat]:
+                    r["category_state_ranks"][cat] = predict_state_rank(rank)
     doc["categories"] = sort_categories(all_cats)
     
     return _json(doc)
@@ -420,12 +424,13 @@ def download_excel(doc_id):
         
     for r in records:
         r["category_marks"] = {}
+        if "category_state_ranks" not in r or r["category_state_ranks"] is None:
+            r["category_state_ranks"] = {}
         for cat, rank in r.get("category_cutoffs", {}).items():
             if rank:
                 r["category_marks"][cat] = predict_mark(rank)
-                if "category_state_ranks" not in r:
-                    r["category_state_ranks"] = {}
-                r["category_state_ranks"][cat] = predict_state_rank(rank)
+                if cat not in r["category_state_ranks"] or not r["category_state_ranks"][cat]:
+                    r["category_state_ranks"][cat] = predict_state_rank(rank)
 
     buf  = generate_excel(records)
     safe = re.sub(r"[^\w\-.]", "_", doc.get("filename", "cutoff"))
