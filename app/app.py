@@ -306,6 +306,7 @@ def upload_pdf():
                 for cat, rank in r["category_cutoffs"].items():
                     if rank:
                         r["category_marks"][cat] = predict_mark(rank)
+                        r["category_state_ranks"][cat] = predict_state_rank(rank)
 
             tasks[t_id]["result"] = {
                 "success":          True,
@@ -399,6 +400,9 @@ def get_extraction(doc_id):
         for cat, rank in r.get("category_cutoffs", {}).items():
             if rank:
                 r["category_marks"][cat] = predict_mark(rank)
+                if "category_state_ranks" not in r:
+                    r["category_state_ranks"] = {}
+                r["category_state_ranks"][cat] = predict_state_rank(rank)
     doc["categories"] = sort_categories(all_cats)
     
     return _json(doc)
@@ -419,6 +423,9 @@ def download_excel(doc_id):
         for cat, rank in r.get("category_cutoffs", {}).items():
             if rank:
                 r["category_marks"][cat] = predict_mark(rank)
+                if "category_state_ranks" not in r:
+                    r["category_state_ranks"] = {}
+                r["category_state_ranks"][cat] = predict_state_rank(rank)
 
     buf  = generate_excel(records)
     safe = re.sub(r"[^\w\-.]", "_", doc.get("filename", "cutoff"))

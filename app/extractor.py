@@ -145,6 +145,61 @@ QUOTA_MAP: dict[str, str] = {
     "HSBC W":          "HSBC (W)",
     "HSEBC W":         "HSEBC (W)",
 
+    # ── Hilly Area Missing Combinations ─────────────────────────────────────────
+    "HA OPEN":         "HOPEN",
+    "HA OPEN (W)":     "HA-OPEN (W)",
+    "HA OBC":          "HOBC",
+    "HA OBC (W)":      "HOBC (W)",
+    "HA SC":           "HSC",
+    "HA SC (W)":       "HSC (W)",
+    "HA ST":           "HST",
+    "HA ST (W)":       "HST (W)",
+    "HA VJA":          "HVJA",
+    "HA VJA (W)":      "HVJA (W)",
+    "HA NTB":          "HNTB",
+    "HA NTB (W)":      "HNTB (W)",
+    "HA NTC":          "HNTC",
+    "HA NTC (W)":      "HNTC (W)",
+    "HA NTD":          "HNTD",
+    "HA NTD (W)":      "HNTD (W)",
+    "HA SEBC":         "HSEBC",
+    "HA SEBC (W)":     "HSEBC (W)",
+    "HA SBC":          "HSBC",
+    "HA SBC (W)":      "HSBC (W)",
+    "HA EWS":          "HEWS",
+    "HA EWS (W)":      "HEWS (W)",
+
+    "HA EMOPEN":       "HOPEN",
+    "HA EMOPEN (W)":   "HA-OPEN (W)",
+    "HA EMOBC":        "HOBC",
+    "HA EMOBCW":       "HOBC (W)",
+    "HA EMSC":         "HSC",
+    "HA EMSCW":        "HSC (W)",
+    "HA EMST":         "HST",
+    "HA EMSTW":        "HST (W)",
+    "HA EMVJA":        "HVJA",
+    "HA EMVJAW":       "HVJA (W)",
+    "HA EMNTB":        "HNTB",
+    "HA EMNTBW":       "HNTB (W)",
+    "HA EMNTC":        "HNTC",
+    "HA EMNTCW":       "HNTC (W)",
+    "HA EMNTD":        "HNTD",
+    "HA EMNTDW":       "HNTD (W)",
+    "HA EMSEBC":       "HSEBC",
+    "HA EMSEBCW":      "HSEBC (W)",
+    "HA EMSBC":        "HSBC",
+    "HA EMSBCW":       "HSBC (W)",
+    "HA EMEWS":        "HEWS",
+    "HA EMEWSW":       "HEWS (W)",
+
+    "HEMOBC":          "HOBC",
+    "HEM OBC":         "HOBC",
+    "HEM NTB":         "HNTB",
+    "HEM NTD":         "HNTD",
+    "HEMNTC":          "HNTC",
+    "HEMNTB":          "HNTB",
+    "HEMNTD":          "HNTD",
+
     # ── EMD prefix (Early Merit Declaration) ────────────────────────────────────
     # These appear as "EMNTBW", "EMOBCW" etc. — the EM prefix is stripped by
     # _JUNK_RE downstream; we keep them as direct lookups for safety.
@@ -258,6 +313,12 @@ QUOTA_MAP: dict[str, str] = {
     "ORPHAN-C":        "ORPHAN",
     "ORPHANC":         "ORPHAN",
     "ORPHAN":          "ORPHAN",
+    "ORPHAN-C EWS":    "ORPHAN",
+    "ORPHANC-EW":      "ORPHAN",
+    "ORPHAN-C OPEN":   "ORPHAN",
+    "ORPHANC-OP":      "ORPHAN",
+    "ORPHAN-A EWS":    "ORPHAN",
+    "ORPHAN-A OPEN":   "ORPHAN",
 
     # ── I.Q. (Institutional Quota) ─────────────────────────────────────────────
     # MINO sub-type collapses into the single "I.Q." column.
@@ -330,6 +391,7 @@ _JUNK_PAREN_RE = re.compile(r"\((?!W\b)[^)]{1,20}\)", re.IGNORECASE)
 
 # Bare "HA" word standing alone (home-address prefix before the actual quota).
 # Must NOT match "HA" that is part of "HOPEN", "HOBC" etc.
+# Note: Deprecated as this improperly strips Hilly Area quotas when preceded by Category.
 _HA_WORD_RE = re.compile(r"(?<!\w)HA(?!\w)", re.IGNORECASE)
 
 # Insert a space between a word-character and "(W)" when the PDF omits it.
@@ -431,9 +493,8 @@ def _extract_quota(raw_block: str) -> Optional[str]:
     if m_iq:
         return "I.Q. MINO" if m_iq.group(1) else "I.Q."
 
-    # Step 5 – strip bare "HA" prefix (standalone word only)
-    s_no_ha = _HA_WORD_RE.sub("", s).strip()
-    s = s_no_ha if s_no_ha else s  # keep original if stripping left nothing
+    # Step 5 – (Removed) We do NOT strip bare HA anymore, because Hilly Area quotas
+    # like "OBC HA OBC" need to map to "HOBC". Stripping it corrupted the quota.
 
     # Step 6 – insert space before (W): TOKEN(W) → TOKEN (W)
     s = _NOSPACE_W_RE.sub(r"\1 (W)", s)
@@ -684,7 +745,7 @@ if __name__ == "__main__":
     import time, sys
     sys.stdout.reconfigure(encoding="utf-8")
 
-    pdf = r"e:\NextStepNeet\SellList-R1-MBBS-BDS.pdf"
+    pdf = r"E:\NextStepNeet\Rank_Mark\Sell.pdf"
     t0 = time.time()
     recs = extract_cutoffs(pdf)
     dt = time.time() - t0
